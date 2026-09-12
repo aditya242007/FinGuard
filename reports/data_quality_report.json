@@ -1,0 +1,2020 @@
+{
+  "transactions": {
+    "profile": {
+      "dataset": "transactions",
+      "row_count": 20400,
+      "column_count": 8,
+      "column_names": [
+        "txn_id",
+        "timestamp",
+        "user_id",
+        "merchant_id",
+        "amount",
+        "utr",
+        "mcc",
+        "status"
+      ],
+      "missing_values": [
+        {
+          "column": "txn_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 20000,
+          "sample_values": [
+            "TXN00011869",
+            "TXN00010383",
+            "TXN00008297",
+            "TXN00006448",
+            "TXN00018792"
+          ]
+        },
+        {
+          "column": "timestamp",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 19083,
+          "sample_values": [
+            "2026-01-15 00:11:30",
+            "2026-01-17 20:09:44",
+            "2026-01-23 14:10:16",
+            "1770063471",
+            "2026-03-31 14:02:37"
+          ]
+        },
+        {
+          "column": "user_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 17878,
+          "sample_values": [
+            "USR45826",
+            "USR79397",
+            "USR87810",
+            "USR54287",
+            "USR53865"
+          ]
+        },
+        {
+          "column": "merchant_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 8051,
+          "sample_values": [
+            "MCH7045",
+            "MCH5031",
+            "MCH9809",
+            "MCH6928",
+            "MCH8121"
+          ]
+        },
+        {
+          "column": "amount",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 19900,
+          "sample_values": [
+            "15722.34",
+            "Rs. 6362.9",
+            "15446.19",
+            "12110.49",
+            "Rs. 19432.94"
+          ]
+        },
+        {
+          "column": "utr",
+          "dtype": "object",
+          "missing_count": 1024,
+          "missing_pct": 5.02,
+          "unique_count": 19001,
+          "sample_values": [
+            "UTR6498104698",
+            "UTR7656190355",
+            "UTR9037001889",
+            "UTR5257823698",
+            "UTR4204272894"
+          ]
+        },
+        {
+          "column": "mcc",
+          "dtype": "object",
+          "missing_count": 2926,
+          "missing_pct": 14.34,
+          "unique_count": 7,
+          "sample_values": [
+            "5411",
+            "4131",
+            "05411",
+            "05411",
+            "4131"
+          ]
+        },
+        {
+          "column": "status",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 14,
+          "sample_values": [
+            "COMPLETED",
+            "TXN_FAILED",
+            "S",
+            "S",
+            "TXN_SUCCESS"
+          ]
+        }
+      ],
+      "duplicate_row_count": 400,
+      "numeric_stats": {
+        "amount": {
+          "mean": 11972.9434,
+          "median": 12228.22,
+          "std": 8053.2218,
+          "min": -24847.86,
+          "max": 24998.12,
+          "negative_count": 429,
+          "zero_count": 0
+        },
+        "mcc": {
+          "mean": 5616.332,
+          "median": 5812.0,
+          "std": 847.8098,
+          "min": 4131.0,
+          "max": 7011.0,
+          "negative_count": 0,
+          "zero_count": 0
+        }
+      }
+    },
+    "issues": {
+      "duplicate_txn_id": {
+        "count": 800,
+        "examples": [
+          "TXN00008297",
+          "TXN00005968",
+          "TXN00005885",
+          "TXN00006562",
+          "TXN00013932"
+        ]
+      },
+      "duplicate_complete_rows": {
+        "count": 400
+      },
+      "blank_txn_id": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "blank_user_id": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "blank_merchant_id": {
+        "count": 0,
+        "pct": 0.0
+      },
+      "blank_utr": {
+        "count": 1024,
+        "pct": 5.02
+      },
+      "amount_anomalies": {
+        "blank_count": 0,
+        "malformed_count": 0,
+        "malformed_examples": [],
+        "negative_count": 429,
+        "zero_count": 0,
+        "valid_count": 19971,
+        "stats": {
+          "mean": 11972.9434,
+          "min": -24847.86,
+          "max": 24998.12
+        }
+      },
+      "timestamp_anomalies": {
+        "blank": 0,
+        "unix_epoch": 1012,
+        "iso8601": 11290,
+        "date_only": 1012,
+        "mixed_format": 7086,
+        "unparseable": 0,
+        "examples": {
+          "iso8601": [
+            "2026-01-15 00:11:30",
+            "2026-01-17 20:09:44",
+            "2026-01-23 14:10:16"
+          ],
+          "mixed_format": [
+            "03-10-2026 09:27:31 PM",
+            "25/02/2026 00:53:02",
+            "03-30-2026 09:37:49 AM"
+          ],
+          "unix_epoch": [
+            "1770063471",
+            "1774692391",
+            "1771632901"
+          ],
+          "date_only": [
+            "2026/02/02",
+            "2026/01/28",
+            "2026/02/20"
+          ]
+        }
+      },
+      "mcc_format": {
+        "counts": {
+          "standard": 14536,
+          "leading_zero": 2938,
+          "blank": 2926
+        },
+        "unusual_examples": []
+      },
+      "status_distribution": {
+        "S": 3538,
+        "Success": 3501,
+        "TXN_SUCCESS": 3490,
+        "COMPLETED": 3477,
+        "SUCCESS": 3389,
+        "FAILED": 455,
+        "TXN_FAILED": 416,
+        "Fail": 395,
+        "Declined": 376,
+        "F": 348,
+        "PENDING": 287,
+        "PROCESSING": 266,
+        "Pending": 236,
+        "Initiated": 226
+      }
+    }
+  },
+  "kyc": {
+    "profile": {
+      "dataset": "kyc",
+      "row_count": 36400,
+      "column_count": 12,
+      "column_names": [
+        "user_id",
+        "full_name",
+        "pan",
+        "aadhaar",
+        "date_of_birth",
+        "city",
+        "state",
+        "monthly_income",
+        "occupation",
+        "signup_timestamp",
+        "kyc_status",
+        "risk_segment"
+      ],
+      "missing_values": [
+        {
+          "column": "user_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 32165,
+          "sample_values": [
+            "USR16112",
+            "USR17216",
+            "USR 45454",
+            "USR46189",
+            "USR85256"
+          ]
+        },
+        {
+          "column": "full_name",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 33921,
+          "sample_values": [
+            "Dhriti Deshmukh",
+            "Megha Jani",
+            "PANINI LAL",
+            "Jack Parikh",
+            "Eta Ravi"
+          ]
+        },
+        {
+          "column": "pan",
+          "dtype": "object",
+          "missing_count": 1896,
+          "missing_pct": 5.21,
+          "unique_count": 33165,
+          "sample_values": [
+            "SEJAA8194O",
+            "QT0ZZ5561X",
+            "QCNTL9489O",
+            "RRVUI4059Q",
+            "ygvoi9236w"
+          ]
+        },
+        {
+          "column": "aadhaar",
+          "dtype": "object",
+          "missing_count": 2664,
+          "missing_pct": 7.32,
+          "unique_count": 32094,
+          "sample_values": [
+            "715658320763",
+            "023412025028",
+            "2781 6299 9816",
+            "0667 8032 7731",
+            "176258817110"
+          ]
+        },
+        {
+          "column": "date_of_birth",
+          "dtype": "object",
+          "missing_count": 2944,
+          "missing_pct": 8.09,
+          "unique_count": 29285,
+          "sample_values": [
+            "06/04/1967 12:14 AM",
+            "1969-02-19 08:25:23",
+            "20/04/1961",
+            "05-Sep-1990",
+            "12-20-1962"
+          ]
+        },
+        {
+          "column": "city",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 41,
+          "sample_values": [
+            "Bombay",
+            "Lucknow",
+            "kolkata",
+            "Amritsar",
+            "delhi"
+          ]
+        },
+        {
+          "column": "state",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 9,
+          "sample_values": [
+            "Maharashtra",
+            "Uttar Pradesh",
+            "West Bengal",
+            "Punjab",
+            "Delhi"
+          ]
+        },
+        {
+          "column": "monthly_income",
+          "dtype": "object",
+          "missing_count": 2933,
+          "missing_pct": 8.06,
+          "unique_count": 26035,
+          "sample_values": [
+            "35119",
+            "80907",
+            "₹11,214",
+            "27.3k",
+            "INR 24,705"
+          ]
+        },
+        {
+          "column": "occupation",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 9,
+          "sample_values": [
+            "Retired",
+            "Freelancer",
+            "Farmer",
+            "Student",
+            "Salaried"
+          ]
+        },
+        {
+          "column": "signup_timestamp",
+          "dtype": "object",
+          "missing_count": 2910,
+          "missing_pct": 7.99,
+          "unique_count": 14608,
+          "sample_values": [
+            "2025-12-02 02:18:16",
+            "01-31-2024",
+            "2026-01-30 23:57:18",
+            "09-04-2025",
+            "03-Feb-2026"
+          ]
+        },
+        {
+          "column": "kyc_status",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 16,
+          "sample_values": [
+            "Done",
+            "Verified",
+            "Pending",
+            "VERIFIED",
+            "APPROVED"
+          ]
+        },
+        {
+          "column": "risk_segment",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 12,
+          "sample_values": [
+            "LOW",
+            "medium",
+            "High",
+            "low",
+            "LOW"
+          ]
+        }
+      ],
+      "duplicate_row_count": 278,
+      "numeric_stats": {
+        "aadhaar": {
+          "mean": 730115875366.1744,
+          "median": 493273017785.5,
+          "std": 1301509600253.6267,
+          "min": 5138170.0,
+          "max": 9997902715891.0,
+          "negative_count": 0,
+          "zero_count": 0
+        },
+        "monthly_income": {
+          "mean": 28246.5287,
+          "median": 25967.0,
+          "std": 23208.3583,
+          "min": -300000.0,
+          "max": 235221.0,
+          "negative_count": 1456,
+          "zero_count": 0
+        }
+      }
+    },
+    "issues": {
+      "duplicate_user_id_normalised": {
+        "count": 13768,
+        "raw_examples": [
+          "USR 45454",
+          "USR46189",
+          "usr22494",
+          "USR83137",
+          "USR99161"
+        ]
+      },
+      "duplicate_user_id_raw": {
+        "count": 8053
+      },
+      "duplicate_complete_rows": {
+        "count": 278
+      },
+      "blank_pan": {
+        "count": 1896,
+        "pct": 5.21
+      },
+      "blank_aadhaar": {
+        "count": 2664,
+        "pct": 7.32
+      },
+      "blank_date_of_birth": {
+        "count": 2944,
+        "pct": 8.09
+      },
+      "blank_monthly_income": {
+        "count": 2933,
+        "pct": 8.06
+      },
+      "blank_signup_timestamp": {
+        "count": 2910,
+        "pct": 7.99
+      },
+      "kyc_status_distribution": {
+        "Verified": 4862,
+        "APPROVED": 4706,
+        "VERIFIED": 4601,
+        "KYC_DONE": 4587,
+        "V": 4554,
+        "Done": 4454,
+        "PENDING": 1465,
+        "Pending": 1032,
+        "P": 1003,
+        "IN_PROGRESS": 984,
+        "Under Review": 983,
+        "Rejected": 923,
+        "R": 611,
+        "REJECTED": 562,
+        "Reject": 547,
+        "FAILED": 526
+      },
+      "kyc_status_unique_normalised": [
+        "APPROVED",
+        "DONE",
+        "FAILED",
+        "IN_PROGRESS",
+        "KYC_DONE",
+        "P",
+        "PENDING",
+        "R",
+        "REJECT",
+        "REJECTED",
+        "UNDER REVIEW",
+        "V",
+        "VERIFIED"
+      ],
+      "risk_segment_distribution": {
+        "low": 7022,
+        "LOW": 7001,
+        "Low": 6947,
+        "medium": 3308,
+        "MEDIUM": 3308,
+        "Medium": 3227,
+        "High": 1260,
+        "high": 1256,
+        "HIGH": 1205,
+        "UNKNOWN": 656,
+        "unknown": 625,
+        "Unknown": 585
+      },
+      "risk_segment_unique_normalised": [
+        "HIGH",
+        "LOW",
+        "MEDIUM",
+        "UNKNOWN"
+      ],
+      "city_capitalisation_inconsistencies": {
+        "total_non_blank": 36400,
+        "inconsistent_count": 17153,
+        "examples": [
+          "kolkata",
+          "delhi",
+          "BLR",
+          "lucknow",
+          "JPR"
+        ]
+      },
+      "state_capitalisation_inconsistencies": {
+        "total_non_blank": 36400,
+        "inconsistent_count": 0,
+        "examples": []
+      },
+      "income_anomalies": {
+        "blank_count": 2933,
+        "malformed_count": 1790,
+        "malformed_examples": [
+          "Not Available",
+          "Not Available",
+          "Not Available",
+          "Not Available",
+          "Not Available",
+          "Not Available",
+          "Not Available",
+          "Not Available",
+          "Not Available",
+          "Not Available"
+        ],
+        "negative_count": 1456,
+        "zero_count": 0,
+        "valid_count": 30221,
+        "stats": {
+          "mean": 28495.155,
+          "min": -300000.0,
+          "max": 235221.0
+        }
+      },
+      "income_with_symbols": {
+        "count": 14004,
+        "examples": [
+          "₹11,214",
+          "27.3k",
+          "INR 24,705",
+          "24.2k",
+          "Rs. 20,231",
+          "Rs. 26,617",
+          "17.7k",
+          "Rs. 19,875",
+          "₹19,624",
+          "Rs. 17,051"
+        ]
+      },
+      "signup_timestamp_anomalies": {
+        "blank": 2910,
+        "unix_epoch": 2913,
+        "iso8601": 8868,
+        "date_only": 21709,
+        "mixed_format": 0,
+        "unparseable": 0,
+        "examples": {
+          "date_only": [
+            "01-31-2024",
+            "09-04-2025",
+            "03-Feb-2026"
+          ],
+          "iso8601": [
+            "2025-12-02 02:18:16",
+            "2026-01-30 23:57:18",
+            "2024-05-24 07:29:05"
+          ],
+          "unix_epoch": [
+            "1752135790",
+            "1719640264",
+            "1733423310"
+          ],
+          "blank": [
+            "",
+            "",
+            ""
+          ]
+        }
+      }
+    }
+  },
+  "merchants": {
+    "profile": {
+      "dataset": "merchants",
+      "row_count": 6210,
+      "column_count": 11,
+      "column_names": [
+        "merchant_id",
+        "merchant_name",
+        "mcc",
+        "merchant_category",
+        "business_type",
+        "city",
+        "state",
+        "onboarding_date",
+        "settlement_account",
+        "merchant_status",
+        "declared_avg_ticket_size"
+      ],
+      "missing_values": [
+        {
+          "column": "merchant_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5083,
+          "sample_values": [
+            "mch2849",
+            "MCH4314",
+            "MCH1986",
+            "mch3899",
+            "MCH4859"
+          ]
+        },
+        {
+          "column": "merchant_name",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5732,
+          "sample_values": [
+            "BHAVSAR, KOTA AND ZACHARIA",
+            "Deshmukh Ltd",
+            "Bains, Chanda and Gh0sh",
+            "  Goswami-Bath  ",
+            "VASA-RAJU"
+          ]
+        },
+        {
+          "column": "mcc",
+          "dtype": "object",
+          "missing_count": 429,
+          "missing_pct": 6.91,
+          "unique_count": 44,
+          "sample_values": [
+            "MCC-7011",
+            "5699",
+            "5311",
+            "4131",
+            "5812"
+          ]
+        },
+        {
+          "column": "merchant_category",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 82,
+          "sample_values": [
+            "hotel_lodging",
+            "Apparel",
+            "Retail",
+            "Transportation",
+            "Restaurant"
+          ]
+        },
+        {
+          "column": "business_type",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 14,
+          "sample_values": [
+            "Private Limited",
+            "PRIVATE_LIMITED",
+            "individual",
+            "Sole Proprietor",
+            "SOLE_PROPRIETOR"
+          ]
+        },
+        {
+          "column": "city",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 41,
+          "sample_values": [
+            "Ludhiana",
+            "Jalandhar",
+            "Jalandhar",
+            "Hyderabad",
+            "Hyd"
+          ]
+        },
+        {
+          "column": "state",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 9,
+          "sample_values": [
+            "Punjab",
+            "Punjab",
+            "Punjab",
+            "Telangana",
+            "Telangana"
+          ]
+        },
+        {
+          "column": "onboarding_date",
+          "dtype": "object",
+          "missing_count": 499,
+          "missing_pct": 8.04,
+          "unique_count": 4400,
+          "sample_values": [
+            "09-23-2025",
+            "10/01/2026",
+            "14-Jan-2023",
+            "1742180385",
+            "1758406998"
+          ]
+        },
+        {
+          "column": "settlement_account",
+          "dtype": "object",
+          "missing_count": 1252,
+          "missing_pct": 20.16,
+          "unique_count": 3550,
+          "sample_values": [
+            "3021439858",
+            "NA",
+            "XXXX9523",
+            "DUSD7272281625368",
+            "TWPF4694358713410"
+          ]
+        },
+        {
+          "column": "merchant_status",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 15,
+          "sample_values": [
+            "Inactive",
+            "I",
+            "A",
+            "ACTIVE",
+            "A"
+          ]
+        },
+        {
+          "column": "declared_avg_ticket_size",
+          "dtype": "object",
+          "missing_count": 371,
+          "missing_pct": 5.97,
+          "unique_count": 5521,
+          "sample_values": [
+            "INR 2,432.18",
+            "986.05",
+            "INR 1,427.52",
+            "-1271.48",
+            "Rs. 214"
+          ]
+        }
+      ],
+      "duplicate_row_count": 12,
+      "numeric_stats": {
+        "mcc": {
+          "mean": 5592.0614,
+          "median": 5699.0,
+          "std": 736.7002,
+          "min": 4131.0,
+          "max": 7011.0,
+          "negative_count": 0,
+          "zero_count": 0
+        },
+        "declared_avg_ticket_size": {
+          "mean": 1494.1767,
+          "median": 1116.47,
+          "std": 2100.6786,
+          "min": -12917.19,
+          "max": 23536.65,
+          "negative_count": 501,
+          "zero_count": 0
+        }
+      }
+    },
+    "issues": {
+      "duplicate_merchant_id_normalised": {
+        "count": 3279,
+        "raw_examples": [
+          "mch2849",
+          "MCH1986",
+          "MCH4859",
+          "MCH 2430",
+          "MCH 9997"
+        ]
+      },
+      "duplicate_merchant_id_raw": {
+        "count": 2049
+      },
+      "duplicate_complete_rows": {
+        "count": 12
+      },
+      "blank_mcc": {
+        "count": 429,
+        "pct": 6.91
+      },
+      "mcc_format": {
+        "counts": {
+          "standard": 4062,
+          "unusual": 771,
+          "leading_zero": 592,
+          "blank": 429,
+          "dashed_prefix": 356
+        },
+        "unusual_examples": [
+          "5311.0",
+          "5912.0",
+          "5999.0",
+          "5912.0",
+          "5942.0"
+        ]
+      },
+      "blank_onboarding_date": {
+        "count": 499,
+        "pct": 8.04
+      },
+      "onboarding_date_anomalies": {
+        "blank": 499,
+        "unix_epoch": 477,
+        "iso8601": 1481,
+        "date_only": 3753,
+        "mixed_format": 0,
+        "unparseable": 0,
+        "examples": {
+          "date_only": [
+            "09-23-2025",
+            "10/01/2026",
+            "14-Jan-2023"
+          ],
+          "iso8601": [
+            "2026-01-27 15:52:53",
+            "04/05/2023 05:49 PM",
+            "13/09/2025 06:55 AM"
+          ],
+          "blank": [
+            "",
+            "",
+            ""
+          ],
+          "unix_epoch": [
+            "1742180385",
+            "1758406998",
+            "1752559334"
+          ]
+        }
+      },
+      "blank_or_invalid_settlement_account": {
+        "count": 2451,
+        "pct": 39.47,
+        "na_variants": {
+          "NA": 1199
+        }
+      },
+      "merchant_category_distribution": {
+        "Department Store": 168,
+        "HOTEL_LODGING": 167,
+        "Retail": 164,
+        "phone service": 161,
+        "Telecom": 159,
+        "Stationery": 156,
+        "CLOTHS": 154,
+        "Mobile Recharge": 152,
+        "Hotel": 151,
+        "Miscellaneous": 150,
+        "DEPT_STORE": 150,
+        "TELECOM": 148,
+        "Transport": 146,
+        "Retail Other": 146,
+        "Books": 144,
+        "Hotels": 142,
+        "Hospitality": 141,
+        "Book Store": 140,
+        "Other": 139,
+        "kirana": 139,
+        "Misc Retail": 138,
+        "BOOKS_STATIONERY": 134,
+        "garments": 134,
+        "Department Stores": 132,
+        "Medical": 131,
+        "transprt": 131,
+        "Food": 129,
+        "MEDICAL_STORE": 125,
+        "Apparel": 124,
+        "Transportation": 124,
+        "Grocery": 122,
+        "Pharmacy": 122,
+        "chemist": 121,
+        "eating place": 121,
+        "Bus/Taxi": 118,
+        "TRAVEL": 118,
+        "Restaurants": 117,
+        "Grocery Stores": 116,
+        "Clothing": 115,
+        "groceries": 114,
+        "Restaurant": 109,
+        "Pharmacies": 107,
+        "GROCERY_STORE": 107,
+        "Fashion": 105,
+        "FOOD_SERVICES": 104,
+        "telecom": 11,
+        "dept_store": 10,
+        "miscellaneous": 9,
+        "retail": 9,
+        "books": 8,
+        "cloths": 7,
+        "hotel_lodging": 7,
+        "hotels": 6,
+        "retail other": 6,
+        "medical_store": 5,
+        "pharmacies": 5,
+        "food": 5,
+        "other": 5,
+        "fashion": 5,
+        "bus/taxi": 5,
+        "food_services": 5,
+        "department store": 5,
+        "misc retail": 5,
+        "book store": 4,
+        "mobile recharge": 4,
+        "hospitality": 4,
+        "restaurant": 4,
+        "travel": 4,
+        "hotel": 4,
+        "stationery": 4,
+        "department stores": 3,
+        "restaurants": 3,
+        "medical": 3,
+        "grocery": 3,
+        "pharmacy": 3,
+        "books_stationery": 3,
+        "grocery stores": 2,
+        "transportation": 2,
+        "grocery_store": 2,
+        "transport": 2,
+        "apparel": 2,
+        "clothing": 1
+      },
+      "merchant_status_distribution": {
+        "Active": 1084,
+        "Enabled": 1037,
+        "Live": 984,
+        "ACTIVE": 971,
+        "A": 961,
+        "Inactive": 200,
+        "Disabled": 147,
+        "INACTIVE": 139,
+        "Closed": 137,
+        "I": 136,
+        "Suspended": 136,
+        "SUSPENDED": 80,
+        "Hold": 80,
+        "S": 70,
+        "Blocked": 48
+      },
+      "business_type_distribution": {
+        "INDIVIDUAL": 789,
+        "PARTNERSHIP": 719,
+        "individual": 417,
+        "SOLE_PROPRIETOR": 415,
+        "partnership": 411,
+        "PRIVATE-LIMITED": 408,
+        "PRIVATE_LIMITED": 394,
+        "Individual": 390,
+        "sole_proprietor": 388,
+        "Partnership": 381,
+        "SOLE-PROPRIETOR": 377,
+        "private_limited": 377,
+        "Sole Proprietor": 376,
+        "Private Limited": 368
+      },
+      "ticket_size_anomalies": {
+        "blank_count": 371,
+        "malformed_count": 0,
+        "malformed_examples": [],
+        "negative_count": 501,
+        "zero_count": 0,
+        "valid_count": 5338,
+        "stats": {
+          "mean": 1494.1767,
+          "min": -12917.19,
+          "max": 23536.65
+        }
+      }
+    }
+  },
+  "chargebacks": {
+    "profile": {
+      "dataset": "chargebacks",
+      "row_count": 2884,
+      "column_count": 13,
+      "column_names": [
+        "complaint_id",
+        "txn_id",
+        "user_id",
+        "merchant_id",
+        "transaction_timestamp",
+        "reported_timestamp",
+        "disputed_amount",
+        "reason_code",
+        "complaint_text",
+        "resolution_status",
+        "bank_response_timestamp",
+        "severity",
+        "channel"
+      ],
+      "missing_values": [
+        {
+          "column": "complaint_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2800,
+          "sample_values": [
+            "CBK0002082",
+            "CBK0001941",
+            "CBK0001799",
+            "CBK0002465",
+            "CBK0001870"
+          ]
+        },
+        {
+          "column": "txn_id",
+          "dtype": "object",
+          "missing_count": 81,
+          "missing_pct": 2.81,
+          "unique_count": 2582,
+          "sample_values": [
+            "TXN00004325",
+            "TXN00003720",
+            "TXN00012539",
+            "TXN00017802",
+            "TXN00015944"
+          ]
+        },
+        {
+          "column": "user_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2454,
+          "sample_values": [
+            "usr97580",
+            "USR54113",
+            "USR17980",
+            "USR76148",
+            "USR24660"
+          ]
+        },
+        {
+          "column": "merchant_id",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2051,
+          "sample_values": [
+            "mch1127",
+            "3835",
+            "mch3700",
+            "MCH4534",
+            "MCH1686"
+          ]
+        },
+        {
+          "column": "transaction_timestamp",
+          "dtype": "object",
+          "missing_count": 235,
+          "missing_pct": 8.15,
+          "unique_count": 1238,
+          "sample_values": [
+            "2026/01/28",
+            "25/02/2026 10:24 AM",
+            "2026/02/04",
+            "30-Mar-2026",
+            "09-Jan-2026"
+          ]
+        },
+        {
+          "column": "reported_timestamp",
+          "dtype": "object",
+          "missing_count": 209,
+          "missing_pct": 7.25,
+          "unique_count": 1329,
+          "sample_values": [
+            "02-01-2026",
+            "1772691855",
+            "02-05-2026",
+            "01-Apr-2026",
+            "1768424501"
+          ]
+        },
+        {
+          "column": "disputed_amount",
+          "dtype": "object",
+          "missing_count": 183,
+          "missing_pct": 6.35,
+          "unique_count": 2609,
+          "sample_values": [
+            "414.69",
+            "Rs. 7,039",
+            "1303.05",
+            "1459.42",
+            "Rs. 548"
+          ]
+        },
+        {
+          "column": "reason_code",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 34,
+          "sample_values": [
+            "Merchant Not Delivered",
+            "login compromised",
+            "customer issue",
+            "no service",
+            "merchant service issue"
+          ]
+        },
+        {
+          "column": "complaint_text",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 84,
+          "sample_values": [
+            "Customer says amount was debited twice.",
+            "User reports money deducted but merchant denies receiving payment.",
+            "merchant service was not delivered after payment.",
+            "Suspicious high-value payment disputed by customer. pls check asap",
+            "Merchant service was not delivered after payment."
+          ]
+        },
+        {
+          "column": "resolution_status",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 13,
+          "sample_values": [
+            "CLOSED",
+            "In Progress",
+            "OPEN",
+            "Rejected",
+            "In Progress"
+          ]
+        },
+        {
+          "column": "bank_response_timestamp",
+          "dtype": "object",
+          "missing_count": 718,
+          "missing_pct": 24.9,
+          "unique_count": 1149,
+          "sample_values": [
+            "2026-02-10 03:19:10",
+            "12/03/2026 06:24 AM",
+            "06/03/2026",
+            "07-Apr-2026",
+            "01-26-2026"
+          ]
+        },
+        {
+          "column": "severity",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 16,
+          "sample_values": [
+            "Critical",
+            "H",
+            "P4",
+            "H",
+            "Low"
+          ]
+        },
+        {
+          "column": "channel",
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 8,
+          "sample_values": [
+            "ivr",
+            "Call Center",
+            "IVR",
+            "ivr",
+            "App"
+          ]
+        }
+      ],
+      "duplicate_row_count": 84,
+      "numeric_stats": {
+        "disputed_amount": {
+          "mean": 2574.1579,
+          "median": 1617.78,
+          "std": 4146.273,
+          "min": -19036.69,
+          "max": 45384.61,
+          "negative_count": 231,
+          "zero_count": 0
+        }
+      }
+    },
+    "issues": {
+      "duplicate_complaint_id": {
+        "count": 168,
+        "examples": [
+          "CBK0001941",
+          "CBK0002541",
+          "CBK0001330",
+          "CBK0000594",
+          "CBK0002003"
+        ]
+      },
+      "duplicate_txn_id": {
+        "count": 509,
+        "examples": [
+          "TXN00003720",
+          "TXN00002822",
+          "TXN00011289",
+          "TXN00014054",
+          "TXN00005940"
+        ]
+      },
+      "blank_txn_id": {
+        "count": 81,
+        "pct": 2.81
+      },
+      "duplicate_complete_rows": {
+        "count": 84
+      },
+      "disputed_amount_anomalies": {
+        "blank_count": 183,
+        "malformed_count": 0,
+        "malformed_examples": [],
+        "negative_count": 231,
+        "zero_count": 0,
+        "valid_count": 2470,
+        "stats": {
+          "mean": 2574.1579,
+          "min": -19036.69,
+          "max": 45384.61
+        }
+      },
+      "reason_code_distribution": {
+        "customer issue": 109,
+        "item not received": 106,
+        "delivery issue": 106,
+        "dispute raised": 103,
+        "charged twice": 102,
+        "no service": 97,
+        "account hacked": 94,
+        "Merchant Not Delivered": 93,
+        "extra amount deducted": 93,
+        "Duplicate Debit": 92,
+        "DUP_DEBIT": 90,
+        "amount mismatch": 90,
+        "Customer Dispute": 89,
+        "ATO": 88,
+        "login compromised": 88,
+        "not delivered": 86,
+        "merchant service issue": 86,
+        "Account Takeover": 85,
+        "complaint": 84,
+        "not done by me": 84,
+        "service failed": 82,
+        "Wrong Amount": 82,
+        "double debit": 80,
+        "unauth txn": 80,
+        "Unauthorized Transaction": 80,
+        "incorrect amount": 74,
+        "FRAUD": 74,
+        "unauthorized_transaction": 74,
+        "Fraud Suspected": 70,
+        "Service Not Provided": 69,
+        "UNAUTHORISED": 67,
+        "fraud": 65,
+        "scam": 64,
+        "suspicious transaction": 58
+      },
+      "resolution_status_distribution": {
+        "Pending Bank": 247,
+        "Rejected": 246,
+        "CLOSED": 236,
+        "Open": 233,
+        "RESOLVED": 227,
+        "PENDING_BANK": 225,
+        "Closed": 224,
+        "REJECTED": 216,
+        "IN_PROGRESS": 214,
+        "OPEN": 207,
+        "Resolved": 207,
+        "WIP": 206,
+        "In Progress": 196
+      },
+      "severity_distribution": {
+        "P3": 272,
+        "MEDIUM": 268,
+        "M": 261,
+        "Medium": 254,
+        "LOW": 250,
+        "P4": 249,
+        "L": 248,
+        "Low": 241,
+        "P2": 167,
+        "H": 158,
+        "High": 151,
+        "HIGH": 146,
+        "P1": 65,
+        "CRIT": 62,
+        "Critical": 52,
+        "CRITICAL": 40
+      },
+      "channel_distribution": {
+        "Email": 382,
+        "Branch": 376,
+        "ivr": 367,
+        "CHATBOT": 367,
+        "IVR": 362,
+        "chatbot": 358,
+        "App": 355,
+        "Call Center": 317
+      },
+      "transaction_timestamp_anomalies": {
+        "blank": 235,
+        "unix_epoch": 233,
+        "iso8601": 672,
+        "date_only": 1744,
+        "mixed_format": 0,
+        "unparseable": 0,
+        "examples": {
+          "date_only": [
+            "2026/01/28",
+            "2026/02/04",
+            "30-Mar-2026"
+          ],
+          "iso8601": [
+            "25/02/2026 10:24 AM",
+            "2026-03-26 10:17:08",
+            "2026-03-18 10:04:06"
+          ],
+          "blank": [
+            "",
+            "",
+            ""
+          ],
+          "unix_epoch": [
+            "1770780031",
+            "1774200089",
+            "1768440280"
+          ]
+        }
+      },
+      "reported_timestamp_anomalies": {
+        "blank": 209,
+        "unix_epoch": 237,
+        "iso8601": 696,
+        "date_only": 1742,
+        "mixed_format": 0,
+        "unparseable": 0,
+        "examples": {
+          "date_only": [
+            "02-01-2026",
+            "02-05-2026",
+            "01-Apr-2026"
+          ],
+          "iso8601": [
+            "2026-04-06 04:17:08",
+            "2026-01-31 14:01:41",
+            "15/03/2026 12:34 PM"
+          ],
+          "unix_epoch": [
+            "1772691855",
+            "1768424501",
+            "1774394238"
+          ],
+          "blank": [
+            "",
+            "",
+            ""
+          ]
+        }
+      },
+      "bank_response_timestamp_anomalies": {
+        "blank": 718,
+        "unix_epoch": 155,
+        "iso8601": 578,
+        "date_only": 1433,
+        "mixed_format": 0,
+        "unparseable": 0,
+        "examples": {
+          "date_only": [
+            "06/03/2026",
+            "07-Apr-2026",
+            "01-26-2026"
+          ],
+          "blank": [
+            "",
+            "",
+            ""
+          ],
+          "iso8601": [
+            "2026-02-10 03:19:10",
+            "12/03/2026 06:24 AM",
+            "12/03/2026 02:16 PM"
+          ],
+          "unix_epoch": [
+            "1770837913",
+            "1768920206",
+            "1771827402"
+          ]
+        }
+      }
+    }
+  },
+  "referential_integrity": {
+    "txn_user_not_in_kyc": {
+      "total_txn": 20400,
+      "blank_user_id": 0,
+      "unmatched_count": 13783,
+      "unmatched_pct": 67.56,
+      "examples": [
+        "USR45826",
+        "USR87810",
+        "USR54287",
+        "USR53865",
+        "USR16629",
+        "USR51755",
+        "USR81003",
+        "USR37834",
+        "USR78386",
+        "USR21114"
+      ]
+    },
+    "txn_merchant_not_in_master": {
+      "total_txn": 20400,
+      "blank_merchant_id": 0,
+      "unmatched_count": 10591,
+      "unmatched_pct": 51.92,
+      "examples": [
+        "MCH7045",
+        "MCH5031",
+        "MCH9809",
+        "MCH8121",
+        "MCH7753",
+        "MCH4523",
+        "MCH4890",
+        "MCH9819",
+        "MCH8222",
+        "MCH8216"
+      ]
+    },
+    "cb_txn_not_in_transactions": {
+      "total_cb": 2884,
+      "blank_txn_id": 81,
+      "unmatched_count": 120,
+      "unmatched_pct": 4.16,
+      "examples": [
+        "TXN65742",
+        "TXN66039",
+        "TXN84758",
+        "TXN94213",
+        "TXN40959",
+        "TXN61071",
+        "TXN95161",
+        "TXN54083",
+        "TXN56695",
+        "TXN37348"
+      ]
+    },
+    "cb_user_not_in_kyc": {
+      "total_cb": 2884,
+      "blank_user_id": 0,
+      "unmatched_count": 1968,
+      "unmatched_pct": 68.24,
+      "examples": [
+        "USR54113",
+        "USR17980",
+        "USR76148",
+        "USR24660",
+        "USR40631",
+        "usr30157",
+        "86750",
+        "USR89588",
+        "USR35882",
+        "USR98915"
+      ]
+    },
+    "cb_merchant_not_in_master": {
+      "total_cb": 2884,
+      "blank_merchant_id": 0,
+      "unmatched_count": 1548,
+      "unmatched_pct": 53.68,
+      "examples": [
+        "mch1127",
+        "MCH6008",
+        "MCH3992",
+        "mch2614",
+        "MCH8913",
+        "8457",
+        "MCH6399",
+        "MCH-4852",
+        "MCH4545",
+        "MCH7286"
+      ]
+    }
+  },
+  "extracted_issues": {
+    "transactions": [
+      {
+        "issue_name": "Duplicate transaction IDs (txn_id)",
+        "count": 800,
+        "percentage": 3.92,
+        "severity": "HIGH",
+        "recommended_action": "Investigate duplicates; during cleaning retain the earliest record or flag all as a ring-pattern if amounts differ."
+      },
+      {
+        "issue_name": "Exact duplicate transaction rows",
+        "count": 400,
+        "percentage": 1.96,
+        "severity": "MEDIUM",
+        "recommended_action": "Deduplicate exact rows in cleaning phase; keep one copy."
+      },
+      {
+        "issue_name": "Blank txn_id",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Records with blank txn_id cannot be joined or traced. Flag for quarantine review in Milestone 2."
+      },
+      {
+        "issue_name": "Blank user_id",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Records with blank user_id cannot be joined or traced. Flag for quarantine review in Milestone 2."
+      },
+      {
+        "issue_name": "Blank merchant_id",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Records with blank merchant_id cannot be joined or traced. Flag for quarantine review in Milestone 2."
+      },
+      {
+        "issue_name": "Blank utr",
+        "count": 1024,
+        "percentage": 5.02,
+        "severity": "MEDIUM",
+        "recommended_action": "Records with blank utr cannot be joined or traced. Flag for quarantine review in Milestone 2."
+      },
+      {
+        "issue_name": "Amount — blank",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Transactions with no amount are unusable; quarantine after review."
+      },
+      {
+        "issue_name": "Amount — malformed",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Strip currency symbols (Rs., ₹, INR) and parse to float in cleaning."
+      },
+      {
+        "issue_name": "Amount — negative",
+        "count": 429,
+        "percentage": 2.1,
+        "severity": "HIGH",
+        "recommended_action": "Negative amounts may represent reversals; flag and verify with status."
+      },
+      {
+        "issue_name": "Amount — zero",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Zero-amount transactions may be test rows; verify with merchant."
+      },
+      {
+        "issue_name": "Timestamp — unix_epoch",
+        "count": 1012,
+        "percentage": 4.96,
+        "severity": "HIGH",
+        "recommended_action": "Convert Unix epoch timestamps to ISO-8601 datetime in cleaning."
+      },
+      {
+        "issue_name": "Timestamp — unparseable",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Rows with unparseable timestamps cannot be time-series analysed; quarantine."
+      },
+      {
+        "issue_name": "Timestamp — blank",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Missing timestamps make time-series analysis impossible; quarantine."
+      },
+      {
+        "issue_name": "Unusual MCC format",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Normalise MCC to 4-digit numeric string; map MCC-XXXX prefix variants."
+      },
+      {
+        "issue_name": "MCC with leading zero (5-digit)",
+        "count": 2938,
+        "percentage": 14.4,
+        "severity": "MEDIUM",
+        "recommended_action": "Strip leading zero to standardise to 4-digit MCC."
+      }
+    ],
+    "kyc": [
+      {
+        "issue_name": "Duplicate user IDs (normalised)",
+        "count": 13768,
+        "percentage": 37.82,
+        "severity": "CRITICAL",
+        "recommended_action": "Normalise user_id format and deduplicate; merge or flag duplicates."
+      },
+      {
+        "issue_name": "Exact duplicate KYC rows",
+        "count": 278,
+        "percentage": 0.76,
+        "severity": "MEDIUM",
+        "recommended_action": "Remove exact duplicate rows in cleaning."
+      },
+      {
+        "issue_name": "Blank pan",
+        "count": 1896,
+        "percentage": 5.21,
+        "severity": "MEDIUM",
+        "recommended_action": "Missing pan is a KYC compliance risk; flag records for manual review."
+      },
+      {
+        "issue_name": "Blank aadhaar",
+        "count": 2664,
+        "percentage": 7.32,
+        "severity": "MEDIUM",
+        "recommended_action": "Missing aadhaar is a KYC compliance risk; flag records for manual review."
+      },
+      {
+        "issue_name": "Blank date_of_birth",
+        "count": 2944,
+        "percentage": 8.09,
+        "severity": "MEDIUM",
+        "recommended_action": "Missing date_of_birth is a KYC compliance risk; flag records for manual review."
+      },
+      {
+        "issue_name": "Blank monthly_income",
+        "count": 2933,
+        "percentage": 8.06,
+        "severity": "MEDIUM",
+        "recommended_action": "Missing monthly_income is a KYC compliance risk; flag records for manual review."
+      },
+      {
+        "issue_name": "Blank signup_timestamp",
+        "count": 2910,
+        "percentage": 7.99,
+        "severity": "MEDIUM",
+        "recommended_action": "Missing signup_timestamp is a KYC compliance risk; flag records for manual review."
+      },
+      {
+        "issue_name": "Inconsistent KYC status casing (16 raw variants → 13 normalised)",
+        "count": 12801,
+        "percentage": 35.17,
+        "severity": "MEDIUM",
+        "recommended_action": "Normalise kyc_status to uppercase canonical values (e.g., VERIFIED, PENDING, REJECTED)."
+      },
+      {
+        "issue_name": "Inconsistent risk_segment casing (12 raw variants)",
+        "count": 24230,
+        "percentage": 66.57,
+        "severity": "MEDIUM",
+        "recommended_action": "Normalise risk_segment to uppercase (HIGH, MEDIUM, LOW)."
+      },
+      {
+        "issue_name": "City capitalisation inconsistencies",
+        "count": 17153,
+        "percentage": 47.12,
+        "severity": "LOW",
+        "recommended_action": "Title-case city during cleaning."
+      },
+      {
+        "issue_name": "State capitalisation inconsistencies",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Title-case state during cleaning."
+      },
+      {
+        "issue_name": "Monthly income with currency symbol / k-suffix",
+        "count": 14004,
+        "percentage": 38.47,
+        "severity": "MEDIUM",
+        "recommended_action": "Strip ₹, INR, Rs. and expand 'k' suffix; store as numeric."
+      },
+      {
+        "issue_name": "Malformed monthly income (unparseable after symbol strip)",
+        "count": 1790,
+        "percentage": 4.92,
+        "severity": "HIGH",
+        "recommended_action": "Manually review unparseable incomes; quarantine if unrecoverable."
+      }
+    ],
+    "merchants": [
+      {
+        "issue_name": "Duplicate merchant IDs (normalised)",
+        "count": 3279,
+        "percentage": 52.8,
+        "severity": "CRITICAL",
+        "recommended_action": "Normalise merchant_id format and deduplicate; retain most recent record."
+      },
+      {
+        "issue_name": "Exact duplicate merchant rows",
+        "count": 12,
+        "percentage": 0.19,
+        "severity": "MEDIUM",
+        "recommended_action": "Remove exact duplicate rows."
+      },
+      {
+        "issue_name": "Blank MCC code",
+        "count": 429,
+        "percentage": 6.91,
+        "severity": "MEDIUM",
+        "recommended_action": "MCC is required for regulatory category mapping; impute from merchant_category if possible."
+      },
+      {
+        "issue_name": "MCC format — unusual",
+        "count": 771,
+        "percentage": 12.42,
+        "severity": "HIGH",
+        "recommended_action": "Map non-standard MCC formats to 4-digit standard."
+      },
+      {
+        "issue_name": "MCC format — dashed_prefix",
+        "count": 356,
+        "percentage": 5.73,
+        "severity": "MEDIUM",
+        "recommended_action": "Strip 'MCC-' prefix; retain 4-digit code."
+      },
+      {
+        "issue_name": "MCC format — leading_zero",
+        "count": 592,
+        "percentage": 9.53,
+        "severity": "MEDIUM",
+        "recommended_action": "Strip leading zero from 5-digit MCC."
+      },
+      {
+        "issue_name": "Missing onboarding date",
+        "count": 499,
+        "percentage": 8.04,
+        "severity": "MEDIUM",
+        "recommended_action": "Onboarding date is required for merchant age analysis; flag for manual lookup."
+      },
+      {
+        "issue_name": "Blank or invalid settlement account",
+        "count": 2451,
+        "percentage": 39.47,
+        "severity": "HIGH",
+        "recommended_action": "Missing settlement account blocks payment; flag as HIGH risk."
+      },
+      {
+        "issue_name": "Inconsistent merchant_category variants (82 raw → 44 normalised)",
+        "count": 5003,
+        "percentage": 80.56,
+        "severity": "MEDIUM",
+        "recommended_action": "Standardise merchant_category to a controlled vocabulary."
+      },
+      {
+        "issue_name": "Inconsistent merchant_status variants (15 raw → 12 normalised)",
+        "count": 3853,
+        "percentage": 62.05,
+        "severity": "MEDIUM",
+        "recommended_action": "Standardise merchant_status to a controlled vocabulary."
+      },
+      {
+        "issue_name": "Inconsistent business_type variants (14 raw → 8 normalised)",
+        "count": 3108,
+        "percentage": 50.05,
+        "severity": "MEDIUM",
+        "recommended_action": "Standardise business_type to a controlled vocabulary."
+      },
+      {
+        "issue_name": "Ticket size — negative",
+        "count": 501,
+        "percentage": 8.07,
+        "severity": "HIGH",
+        "recommended_action": "Negative ticket sizes are invalid; verify or quarantine."
+      },
+      {
+        "issue_name": "Ticket size — malformed",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Strip INR/₹ prefix; convert to numeric."
+      }
+    ],
+    "chargebacks": [
+      {
+        "issue_name": "Duplicate complaint IDs",
+        "count": 168,
+        "percentage": 5.83,
+        "severity": "CRITICAL",
+        "recommended_action": "Investigate duplicate complaint IDs; may indicate system re-submission."
+      },
+      {
+        "issue_name": "Duplicate txn_id in chargebacks",
+        "count": 509,
+        "percentage": 17.65,
+        "severity": "HIGH",
+        "recommended_action": "Multiple chargebacks on same txn may indicate double-dispute; review."
+      },
+      {
+        "issue_name": "Exact duplicate chargeback rows",
+        "count": 84,
+        "percentage": 2.91,
+        "severity": "MEDIUM",
+        "recommended_action": "Remove exact duplicates in cleaning."
+      },
+      {
+        "issue_name": "Blank txn_id in chargebacks",
+        "count": 81,
+        "percentage": 2.81,
+        "severity": "LOW",
+        "recommended_action": "Chargebacks without txn_id cannot be linked to transactions; flag for manual review."
+      },
+      {
+        "issue_name": "Disputed amount — blank",
+        "count": 183,
+        "percentage": 6.35,
+        "severity": "HIGH",
+        "recommended_action": "Blank disputed amount makes financial impact assessment impossible."
+      },
+      {
+        "issue_name": "Disputed amount — malformed",
+        "count": 0,
+        "percentage": 0.0,
+        "severity": "LOW",
+        "recommended_action": "Strip symbols and parse to float."
+      },
+      {
+        "issue_name": "Disputed amount — negative",
+        "count": 231,
+        "percentage": 8.01,
+        "severity": "MEDIUM",
+        "recommended_action": "Negative disputed amounts need verification."
+      },
+      {
+        "issue_name": "Inconsistent reason_code variants (34 raw → 33 normalised)",
+        "count": 2565,
+        "percentage": 88.94,
+        "severity": "MEDIUM",
+        "recommended_action": "Standardise reason_code to canonical uppercase vocabulary."
+      },
+      {
+        "issue_name": "Inconsistent resolution_status variants (13 raw → 9 normalised)",
+        "count": 1353,
+        "percentage": 46.91,
+        "severity": "MEDIUM",
+        "recommended_action": "Standardise resolution_status to canonical uppercase vocabulary."
+      },
+      {
+        "issue_name": "Inconsistent severity variants (16 raw → 12 normalised)",
+        "count": 698,
+        "percentage": 24.2,
+        "severity": "MEDIUM",
+        "recommended_action": "Standardise severity to canonical uppercase vocabulary."
+      },
+      {
+        "issue_name": "Inconsistent channel variants (8 raw → 6 normalised)",
+        "count": 2155,
+        "percentage": 74.72,
+        "severity": "MEDIUM",
+        "recommended_action": "Standardise channel to canonical uppercase vocabulary."
+      },
+      {
+        "issue_name": "transaction_timestamp — unix_epoch",
+        "count": 233,
+        "percentage": 8.08,
+        "severity": "HIGH",
+        "recommended_action": "Convert Unix epoch to ISO-8601."
+      },
+      {
+        "issue_name": "transaction_timestamp — blank",
+        "count": 235,
+        "percentage": 8.15,
+        "severity": "HIGH",
+        "recommended_action": "Missing timestamps break dispute delay analysis."
+      },
+      {
+        "issue_name": "reported_timestamp — unix_epoch",
+        "count": 237,
+        "percentage": 8.22,
+        "severity": "HIGH",
+        "recommended_action": "Convert Unix epoch to ISO-8601."
+      },
+      {
+        "issue_name": "reported_timestamp — blank",
+        "count": 209,
+        "percentage": 7.25,
+        "severity": "HIGH",
+        "recommended_action": "Missing timestamps break dispute delay analysis."
+      },
+      {
+        "issue_name": "bank_response_timestamp — unix_epoch",
+        "count": 155,
+        "percentage": 5.37,
+        "severity": "HIGH",
+        "recommended_action": "Convert Unix epoch to ISO-8601."
+      },
+      {
+        "issue_name": "bank_response_timestamp — blank",
+        "count": 718,
+        "percentage": 24.9,
+        "severity": "HIGH",
+        "recommended_action": "Missing timestamps break dispute delay analysis."
+      }
+    ],
+    "referential_integrity": [
+      {
+        "issue_name": "Transaction user_id not found in KYC (normalised)",
+        "count": 13783,
+        "percentage": 67.56,
+        "severity": "CRITICAL",
+        "recommended_action": "Normalise user_id format and re-attempt join before flagging as orphan."
+      },
+      {
+        "issue_name": "Transaction merchant_id not found in Merchant master (normalised)",
+        "count": 10591,
+        "percentage": 51.92,
+        "severity": "HIGH",
+        "recommended_action": "Normalise merchant_id format; orphan transactions cannot be risk-scored."
+      },
+      {
+        "issue_name": "Chargeback txn_id not found in Transactions (normalised)",
+        "count": 120,
+        "percentage": 4.16,
+        "severity": "MEDIUM",
+        "recommended_action": "Normalise txn_id; unlinked chargebacks cannot contribute to dispute ratio."
+      },
+      {
+        "issue_name": "Chargeback user_id not found in KYC (normalised)",
+        "count": 1968,
+        "percentage": 68.24,
+        "severity": "HIGH",
+        "recommended_action": "Normalise user_id; unlinked chargebacks cannot be attributed to a KYC profile."
+      },
+      {
+        "issue_name": "Chargeback merchant_id not found in Merchant master (normalised)",
+        "count": 1548,
+        "percentage": 53.68,
+        "severity": "HIGH",
+        "recommended_action": "Normalise merchant_id; unlinked chargebacks inflate unattributed dispute count."
+      }
+    ]
+  }
+}
