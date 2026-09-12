@@ -8,7 +8,7 @@ This dictionary categorizes all features generated during M5 Feature Engineering
 * **POST-EVENT (RETROSPECTIVE)**: Only available *after* the transaction has completed (e.g., chargebacks). **Must NOT be used to predict fraud for the transaction itself.** Useful for investigations, clustering, or target creation.
 * **AGGREGATED BEHAVIORAL**: Historical aggregations up to the current dataset boundary.
   > [!WARNING]
-  > Since these aggregations do not currently use strict rolling point-in-time windowing, they contain future information relative to early transactions in the dataset. They must be treated with caution if evaluating real-time models.
+  > Global user/merchant aggregates are retrospective features. They must not be used as transaction-time predictors without point-in-time reconstruction.
 
 ---
 
@@ -24,8 +24,8 @@ This dictionary categorizes all features generated during M5 Feature Engineering
 | `day_of_week` | Day of the week (0-6) | TRANSACTION-TIME | |
 | `success_flag` | Status is SUCCESS | NEAR-TIME | |
 | `failed_flag` | Status is FAILED | NEAR-TIME | |
-| `timestamp_invalid_flag` | Original timestamp could not be parsed | TRANSACTION-TIME | DQ signal |
-| `missing_utr_flag` | UTR is missing | TRANSACTION-TIME | DQ signal |
+| `timestamp_invalid_flag` | Data-quality signal indicating invalid or anomalous timestamp information. | TRANSACTION-TIME | DQ signal |
+| `missing_utr_flag` | Transaction/data-quality signal indicating missing UTR and potentially reduced reconciliation/traceability. | TRANSACTION-TIME | DQ signal |
 | `duplicate_txn_id_flag` | Normalized TXN ID is duplicated | TRANSACTION-TIME | DQ signal |
 | `has_chargeback` | Whether the transaction was disputed | POST-EVENT | **LEAKAGE DANGER** |
 | `chargeback_report_delay_hours` | Hours between txn and dispute | POST-EVENT | **LEAKAGE DANGER** |

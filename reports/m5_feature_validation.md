@@ -19,13 +19,15 @@
 4. `amount_iqr_anomaly_flag` (Transaction) - Flags extreme global outliers.
 5. `failure_rate` (User & Merchant) - High failure frequencies may indicate credential testing.
 6. `dispute_after_7_days_rate` (User & Merchant) - Identifies merchants processing late-reported or delayed-discovery fraud patterns.
-7. `missing_utr_flag` (Transaction) - Indicates broken payment reconciliation logic which correlates strongly with high-risk platforms.
+7. `missing_utr_flag` (Transaction) - Transaction/data-quality signal indicating missing UTR and potentially reduced reconciliation/traceability.
 8. `kyc_duplicate_entity_flag` (User) - Multiple users linked to the same KYC details.
 9. `negative_amount_flag` (Transaction) - Captures potentially anomalous reversal behavior without removing the data point.
-10. `timestamp_invalid_flag` (Transaction) - Flags system-level data quality manipulations.
+10. `timestamp_invalid_flag` (Transaction) - Data-quality signal indicating invalid or anomalous timestamp information.
 
 ## 4. Leakage Risks
-All chargeback metrics (e.g. `has_chargeback`, `chargeback_rate`) are labeled strictly as **POST-EVENT (RETROSPECTIVE)**. Using these as predictors at transaction-time in M6 will guarantee temporal leakage and over-optimistic model performance. Aggregated features (like total volume) are currently calculated globally rather than using point-in-time constraints.
+All chargeback metrics (e.g. `has_chargeback`, `chargeback_rate`) are labeled strictly as **POST-EVENT (RETROSPECTIVE)**. Using these as predictors at transaction-time in M6 will guarantee temporal leakage and over-optimistic model performance. 
+
+**IMPORTANT**: Global user/merchant aggregates are retrospective features. They must not be used as transaction-time predictors without point-in-time reconstruction.
 
 ## 5. Negative Value & Missingness Handling
 - **Negative Values**: Fully preserved across all tables (e.g. `amount_numeric`, `total_transaction_amount`), generating accurate net calculations without silent positive conversions.
