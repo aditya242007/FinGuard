@@ -201,13 +201,25 @@ def build_user_merchant_edges(txns: pd.DataFrame,
                               cb: pd.DataFrame) -> pd.DataFrame:
     """
     USER -[TRANSACTED_WITH]-> MERCHANT (aggregated per user-merchant pair)
+
+    chargeback_count            = total count of chargeback complaint records
+                                  (can exceed transaction_count if one txn has
+                                   multiple complaint records)
+    chargebacked_transaction_count = count of DISTINCT transactions that have
+                                     at least one chargeback record (binary flag
+                                     from M3 `has_chargeback`).
+                                     This is the correct numerator for chargeback
+                                     RATE, consistent with M5/M6 definition.
     """
     txn_ts = pd.to_datetime(txns["timestamp_clean"], errors="coerce")
 
     base = txns[["user_id_normalized", "merchant_id_normalized",
                  "txn_id_normalized", "amount_numeric",
-                 "chargeback_count", "total_disputed_amount"]].copy()
+                 "chargeback_count", "total_disputed_amount",
+                 "has_chargeback"]].copy()
     base["ts"] = txn_ts
+    # Coerce has_chargeback to int (True/False -> 1/0) for safe aggregation
+    base["has_chargeback_int"] = base["has_chargeback"].astype(int)
 
     agg = base.groupby(["user_id_normalized", "merchant_id_normalized"],
                        as_index=False).agg(
@@ -216,8 +228,11 @@ def build_user_merchant_edges(txns: pd.DataFrame,
         avg_amount=("amount_numeric", lambda x: x.abs().mean()),
         first_transaction_time=("ts", "min"),
         last_transaction_time=("ts", "max"),
+        # Raw complaint-record count (preserved; can exceed transaction_count)
         chargeback_count=("chargeback_count", "sum"),
         disputed_amount=("total_disputed_amount", "sum"),
+        # Correct chargeback rate numerator: distinct txns with >=1 complaint
+        chargebacked_transaction_count=("has_chargeback_int", "sum"),
     )
     agg["relationship_duration_days"] = (
         (agg["last_transaction_time"] - agg["first_transaction_time"])
@@ -414,12 +429,18 @@ def score_cluster(component: set[str],
         um_rels["target"].isin(merchant_ids)
     )
     pairs = um_rels[pair_mask]
-    total_txn_count = int(pairs["transaction_count"].sum())
-    total_amount    = float(pairs["total_amount"].sum())
-    total_cb        = int(pairs["chargeback_count"].sum())
-    total_disputed  = float(pairs["disputed_amount"].sum())
+    total_txn_count    = int(pairs["transaction_count"].sum())
+    total_amount       = float(pairs["total_amount"].sum())
+    total_cb           = int(pairs["chargeback_count"].sum())               # raw complaint records
+    total_disputed     = float(pairs["disputed_amount"].sum())
+    # Correct numerator: distinct transactions with >=1 chargeback record
+    # Always <= total_txn_count, so rate is always in [0, 1]
+    chargebacked_txn_count = int(pairs["chargebacked_transaction_count"].sum())
 
-    cluster_chargeback_rate = total_cb / total_txn_count if total_txn_count > 0 else 0.0
+    cluster_chargeback_rate = (
+        chargebacked_txn_count / total_txn_count
+        if total_txn_count > 0 else 0.0
+    )
     disputed_ratio = total_disputed / total_amount if total_amount > 0 else 0.0
 
     # --- Temporal concentration ---
@@ -483,13 +504,14 @@ def score_cluster(component: set[str],
         n_merchants=len(merchant_ids),
         n_transactions=total_txn_count,
         transaction_amount=round(total_amount, 2),
-        chargeback_count=total_cb,
+        chargeback_count=total_cb,                                      # raw complaint records
+        chargebacked_transaction_count=chargebacked_txn_count,          # distinct txns with >=1 CB
         disputed_amount=round(total_disputed, 2),
         average_user_risk=round(avg_user_risk, 4),
         average_merchant_risk=round(avg_merch_risk, 4),
         max_user_risk=round(max_user_risk, 4),
         max_merchant_risk=round(max_merch_risk, 4),
-        cluster_chargeback_rate=round(cluster_chargeback_rate, 4),
+        cluster_chargeback_rate=round(cluster_chargeback_rate, 4),      # always in [0, 1]
         disputed_amount_ratio=round(disputed_ratio, 4),
         temporal_concentration=round(temp_conc, 4),
         relationship_concentration=round(rel_conc, 4),
@@ -538,7 +560,8 @@ def detect_clusters(G: nx.Graph,
     if not rows:
         clusters_df = pd.DataFrame(columns=[
             "cluster_id", "n_users", "n_merchants", "n_transactions",
-            "transaction_amount", "chargeback_count", "disputed_amount",
+            "transaction_amount", "chargeback_count",
+            "chargebacked_transaction_count", "disputed_amount",
             "average_user_risk", "average_merchant_risk",
             "max_user_risk", "max_merchant_risk",
             "cluster_chargeback_rate", "disputed_amount_ratio",
@@ -551,7 +574,8 @@ def detect_clusters(G: nx.Graph,
         # Reorder columns
         col_order = [
             "cluster_id", "n_users", "n_merchants", "n_transactions",
-            "transaction_amount", "chargeback_count", "disputed_amount",
+            "transaction_amount", "chargeback_count",
+            "chargebacked_transaction_count", "disputed_amount",
             "average_user_risk", "average_merchant_risk",
             "max_user_risk", "max_merchant_risk",
             "cluster_chargeback_rate", "disputed_amount_ratio",

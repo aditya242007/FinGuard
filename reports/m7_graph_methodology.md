@@ -58,7 +58,8 @@ pair using actual transaction records:
 | `avg_amount` | MEAN of `abs(amount)` |
 | `first_transaction_time` | MIN timestamp |
 | `last_transaction_time` | MAX timestamp |
-| `chargeback_count` | SUM of chargeback_count from M3 join |
+| `chargeback_count` | SUM of complaint records from M3 join (raw record count; can exceed `transaction_count` when one transaction has multiple complaint records — **preserved for completeness, not used as rate numerator**) |
+| `chargebacked_transaction_count` | COUNT of distinct transactions with `has_chargeback = True` (binary flag from M3; always ≤ `transaction_count` — **used as the rate numerator, consistent with M5/M6 `chargeback_transaction_count`**) |
 | `disputed_amount` | SUM of total_disputed_amount |
 | `relationship_duration_days` | `(last - first).total_seconds() / 86400` |
 | `transaction_frequency_per_day` | `txn_count / max(duration_days, 1)` |
@@ -177,16 +178,23 @@ transactions concentrated within a 24-hour period).
 
 For each cluster:
 
-| Metric | Formula |
-|--------|---------|
-| `cluster_chargeback_rate` | cluster_chargeback_count / cluster_transaction_count |
-| `disputed_amount_ratio` | cluster_disputed_amount / cluster_total_amount |
-| `chargeback_count` | Raw numerator (always preserved) |
-| `n_transactions` | Raw denominator (always preserved) |
+| Metric | Formula | Range |
+|--------|---------|-------|
+| `cluster_chargeback_rate` | `chargebacked_transaction_count / n_transactions` | [0, 1] — always a valid fraction |
+| `disputed_amount_ratio` | `cluster_disputed_amount / cluster_total_amount` | [0, ∞) |
+| `chargeback_count` | Raw complaint-record count (preserved; can exceed `n_transactions` if one transaction has multiple records — **not used as rate numerator**) | ≥ 0 |
+| `chargebacked_transaction_count` | Distinct transactions with ≥ 1 complaint record (binary M3 `has_chargeback`) | [0, n_transactions] |
+| `n_transactions` | Raw transaction denominator (always preserved) | ≥ 1 |
 
-A cluster with 2 chargebacks / 2 transactions (100% rate) is treated differently
-from one with 200 chargebacks / 20,000 transactions (1% rate), because the raw
-counts are preserved in `suspicious_clusters.csv` for human review.
+**Definition note (corrected from initial version):** `cluster_chargeback_rate` uses
+`chargebacked_transaction_count` as the numerator — the count of distinct transactions
+with at least one chargeback record — consistent with M5/M6's `chargeback_transaction_count`.
+A transaction with 2 complaint records counts as **1 chargebacked transaction**, giving a
+maximum possible rate of 1.0 (100%). The raw `chargeback_count` (complaint records) is
+preserved separately for analyst review.
+
+Example: 1 transaction + 2 complaint records → `cluster_chargeback_rate = 1.0` (not 2.0),
+`chargeback_count = 2`.
 
 ---
 

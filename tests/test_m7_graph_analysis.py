@@ -369,3 +369,97 @@ class TestGraphMetrics:
         numeric_cols = nodes.select_dtypes(include=[np.number]).columns
         for col in numeric_cols:
             assert not np.isinf(nodes[col]).any(), f"Inf in nodes column: {col}"
+
+
+# ---------------------------------------------------------------------------
+# 12. Chargeback Rate Regression Tests (Definition Fix)
+# ---------------------------------------------------------------------------
+
+class TestChargebackRateDefinition:
+    """
+    Regression tests proving cluster_chargeback_rate uses
+    COUNT(distinct transactions with >=1 CB) / COUNT(transactions),
+    consistent with M5/M6. Rate must always be in [0, 1].
+    """
+
+    def _make_um_row(self, txn_count: int, cb_records: int,
+                     chargebacked_txns: int) -> pd.DataFrame:
+        """Helper: create a minimal UM relationship row."""
+        return pd.DataFrame([{
+            "source": "USR_TEST",
+            "target": "MCH_TEST",
+            "transaction_count": txn_count,
+            "total_amount": 1000.0,
+            "avg_amount": 1000.0 / txn_count,
+            "chargeback_count": cb_records,
+            "chargebacked_transaction_count": chargebacked_txns,
+            "disputed_amount": 500.0,
+            "edge_type": "TRANSACTED_WITH",
+        }])
+
+    def test_one_txn_two_cb_records_rate_is_1(self):
+        """1 transaction + 2 chargeback records => rate = 1.0, NOT 2.0."""
+        um = self._make_um_row(txn_count=1, cb_records=2, chargebacked_txns=1)
+        # rate = chargebacked_transaction_count / transaction_count = 1/1 = 1.0
+        rate = um["chargebacked_transaction_count"].sum() / um["transaction_count"].sum()
+        assert rate == 1.0, f"Expected 1.0, got {rate}"
+        assert rate <= 1.0
+
+    def test_two_txns_one_cb_rate_is_half(self):
+        """2 transactions + 1 chargeback => rate = 0.5."""
+        um = self._make_um_row(txn_count=2, cb_records=1, chargebacked_txns=1)
+        rate = um["chargebacked_transaction_count"].sum() / um["transaction_count"].sum()
+        assert rate == 0.5, f"Expected 0.5, got {rate}"
+
+    def test_two_txns_zero_cb_rate_is_zero(self):
+        """2 transactions + 0 chargebacks => rate = 0.0."""
+        um = self._make_um_row(txn_count=2, cb_records=0, chargebacked_txns=0)
+        rate = um["chargebacked_transaction_count"].sum() / um["transaction_count"].sum()
+        assert rate == 0.0, f"Expected 0.0, got {rate}"
+
+    def test_cluster_chargeback_rate_never_exceeds_one(self, clusters):
+        """cluster_chargeback_rate must always be in [0, 1] for all clusters."""
+        above_one = (clusters["cluster_chargeback_rate"] > 1.0).sum()
+        assert above_one == 0, (
+            f"{above_one} clusters have cluster_chargeback_rate > 1.0 "
+            f"(definition fix not applied correctly)"
+        )
+
+    def test_clu00604_chargeback_rate_is_one(self, clusters):
+        """
+        CLU00604 has 1 transaction + 2 complaint records.
+        After the fix, cluster_chargeback_rate must be 1.0 (100%), NOT 2.0 (200%).
+        The raw chargeback_count must remain 2 (complaint records preserved).
+        """
+        row = clusters[clusters["cluster_id"] == "CLU00604"]
+        if len(row) == 0:
+            pytest.skip("CLU00604 not present in current cluster output")
+        row = row.iloc[0]
+        assert row["cluster_chargeback_rate"] == 1.0, (
+            f"Expected cluster_chargeback_rate=1.0, got {row['cluster_chargeback_rate']}"
+        )
+        assert row["chargeback_count"] == 2, (
+            f"Raw chargeback_count should remain 2, got {row['chargeback_count']}"
+        )
+
+    def test_chargebacked_transaction_count_column_exists(self, clusters):
+        """The new chargebacked_transaction_count column must be present."""
+        assert "chargebacked_transaction_count" in clusters.columns
+
+    def test_chargebacked_txn_count_lte_n_transactions(self, clusters):
+        """chargebacked_transaction_count <= n_transactions for all clusters."""
+        assert (
+            clusters["chargebacked_transaction_count"] <= clusters["n_transactions"]
+        ).all(), "chargebacked_transaction_count exceeds n_transactions in some clusters"
+
+    def test_chargeback_count_gte_chargebacked_txn_count(self, clusters):
+        """
+        Raw complaint records (chargeback_count) >= distinct chargebacked txns.
+        A transaction can have multiple complaint records.
+        """
+        assert (
+            clusters["chargeback_count"] >= clusters["chargebacked_transaction_count"]
+        ).all(), (
+            "chargeback_count (records) < chargebacked_transaction_count (txns) — "
+            "this would be impossible"
+        )
