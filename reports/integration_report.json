@@ -1,0 +1,14 @@
+{
+  "initial_transactions": 20000,
+  "kyc_duplicate_entities_resolved": 6114,
+  "kyc_canonical_rows": 28920,
+  "merchant_duplicate_entities_resolved": 1407,
+  "merchant_canonical_rows": 4343,
+  "aggregated_chargeback_rows": 2567,
+  "integrated_transactions": 20000,
+  "users_analytics_rows": 17878,
+  "merchants_analytics_rows": 8051,
+  "transaction_has_kyc_count": 6478,
+  "transaction_has_merchant_count": 9631,
+  "transaction_has_chargeback_count": 2451
+}
