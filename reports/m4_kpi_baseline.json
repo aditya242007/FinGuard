@@ -1,0 +1,53 @@
+{
+  "transaction_kpis": {
+    "total_transactions": 20000,
+    "total_amount": 239232643.3,
+    "avg_amount": 11961.63,
+    "median_amount": 12218.01,
+    "min_amount": -24847.86,
+    "max_amount": 24998.12,
+    "successful_count": 17053,
+    "failed_count": 1955,
+    "pending_count": 992,
+    "success_rate_pct": 85.26,
+    "failure_rate_pct": 9.78,
+    "pending_rate_pct": 4.96,
+    "date_range_start": "2026-01-01",
+    "date_range_end": "2026-12-03",
+    "analysis_days": 337,
+    "avg_txn_per_day": 59.35,
+    "avg_value_per_day": 709889.15,
+    "missing_amount_count": 0,
+    "negative_amount_count": 420,
+    "parse_failed_amount_count": 0
+  },
+  "chargeback_kpis": {
+    "total_chargeback_records": 2567,
+    "transactions_with_chargeback": 2451,
+    "chargeback_rate_pct": 12.255,
+    "total_disputed_amount": 6342602.86,
+    "avg_disputed_amount": 2432.91,
+    "median_disputed_amount": 1561.56,
+    "disputed_amount_ratio_pct": 2.6512,
+    "avg_report_delay_hours": 1256.78,
+    "median_report_delay_hours": 846.16,
+    "disputes_after_7_days": 1102,
+    "disputes_after_7_days_pct": 44.96
+  },
+  "data_quality_kpis": {
+    "utr_missing_count": 1000,
+    "utr_missing_pct": 5.0,
+    "negative_amount_count": 420,
+    "negative_amount_pct": 2.1,
+    "invalid_timestamp_count": 0,
+    "invalid_timestamp_pct": 0.0,
+    "unmatched_kyc_count": 13522,
+    "unmatched_kyc_pct": 67.61,
+    "unmatched_merchant_count": 10369,
+    "unmatched_merchant_pct": 51.84,
+    "duplicate_txn_id_count": 0,
+    "duplicate_txn_id_pct": 0.0,
+    "referential_integrity_issue_count": 16867,
+    "referential_integrity_issue_pct": 84.33
+  }
+}
