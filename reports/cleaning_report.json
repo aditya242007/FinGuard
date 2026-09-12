@@ -1,0 +1,31 @@
+{
+  "datasets": {
+    "transactions": {
+      "raw_rows": 20400,
+      "exact_duplicates_removed": 400,
+      "processed_rows": 20000
+    },
+    "kyc": {
+      "raw_rows": 36400,
+      "exact_duplicates_removed": 278,
+      "processed_rows": 36122
+    },
+    "merchants": {
+      "raw_rows": 6210,
+      "exact_duplicates_removed": 12,
+      "processed_rows": 6198
+    },
+    "chargebacks": {
+      "raw_rows": 2884,
+      "exact_duplicates_removed": 84,
+      "processed_rows": 2800
+    }
+  },
+  "referential_integrity": {
+    "txn_user_fk_missing": 13522,
+    "txn_merchant_fk_missing": 10369,
+    "cb_txn_fk_missing": 116,
+    "cb_user_fk_missing": 1915,
+    "cb_merchant_fk_missing": 1501
+  }
+}
