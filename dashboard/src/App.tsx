@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useFilterStore } from './store/useFilterStore';
 import { FilterBar } from './components/FilterBar';
+import { AIAssistantPanel } from './components/AIAssistantPanel';
 import { Shield, LayoutDashboard, Store, Search, AlertTriangle } from 'lucide-react';
 
 // Placeholder Pages (will be implemented next)
@@ -70,6 +71,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           {children}
         </div>
       </main>
+      <AIAssistantPanel />
     </div>
   );
 };
