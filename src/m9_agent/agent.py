@@ -1,191 +1,155 @@
 import os
 import json
 from typing import Dict, Any, List
-
-# Try importing openai; fallback if not available (though we installed it)
 import openai
 
 from src.m9_agent import data_tools
 
-# We provide a generic OpenAI-compatible abstraction that can be used with OpenAI, Gemini (via OpenAI compat), etc.
 def get_llm_client():
     api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("Missing API key. Set OPENAI_API_KEY or GEMINI_API_KEY.")
         
-    # If GEMINI_API_KEY is present without OPENAI_API_KEY, point to Google's OpenAI compat endpoint
     if os.environ.get("GEMINI_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
         return openai.OpenAI(
             api_key=api_key,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-        ), "gemini-2.5-flash" # or another model name available
+        ), "gemini-2.5-flash"
     else:
         return openai.OpenAI(api_key=api_key), "gpt-4o-mini"
 
-SYSTEM_PROMPT = """You are FINguard AI, an expert FinTech risk investigation assistant.
-Your job is to investigate entities using the deterministic data tools provided.
+SYSTEM_PROMPT = """You are FINguard AI, an Explainable AI Investigation Assistant.
+Your job is to investigate entities using the deterministic data tools provided, which fetch real evidence from M3-M7 analytical layers.
 
 CRITICAL RULES:
-1. NO FRAUD CLAIMS: Never say "fraud", "fraudulent", or "fraud probability". 
-   Instead, use terms like "elevated-risk transaction", "investigation candidate", "suspicious cluster", "risk signal", "observed behavioral pattern".
-2. EVIDENCE FIRST: Never invent evidence. Every claim must be supported by data returned from your tools.
-3. If data is missing or tools return errors, state: "Insufficient evidence in the available dataset."
+1. EVIDENCE FIRST: Never invent evidence. You must reason ONLY from retrieved evidence.
+2. If a requested fact cannot be retrieved, say exactly: "Insufficient evidence in the available FinGuard dataset."
+3. FRAUD CLAIM SAFETY: There are NO ground-truth fraud labels. NEVER use terms like "confirmed fraud", "this transaction is fraudulent", "fraud probability", or "fraudster".
+4. SAFE TERMINOLOGY: Use ONLY these terms: "investigation candidate", "elevated-risk activity", "observed risk signal", "suspicious behavioral pattern", "requires investigation", "risk is elevated based on observed signals".
+5. PRESERVE SEMANTICS: For clusters, the "chargeback rate" means distinct transactions with >=1 chargeback / total transactions. Do not redefine it.
 
 RESPONSE FORMAT:
-Use Markdown. Structure your response as follows (omit sections if inapplicable):
+Use the exact structure below for entity investigations.
 
 ### Investigation Summary
 Entity: [ID]
-Risk level: [Level]
-Risk score: [Score]
+Risk Level: [Level]
+Risk Score: [Score]
 
 ### Evidence
-- [Signal 1]
-- [Signal 2]
+- [Signal or Fact] (Source: [source_dataset], Field: [field])
 
 ### Related Activity
 Transactions: [Count]
+Users: [Count]
 Merchants: [Count]
 Chargebacks: [Count]
-Cluster: [Cluster ID]
+Clusters: [Cluster IDs]
 
 ### Why This Matters
-Explain the observable behavioral pattern based on the risk signals.
+Explain the observed behavioral pattern based on the evidence.
 
 ### Data Limitations
-Mention relevant data quality issues (e.g., missing UTR, unmatched KYC) if present in the tool response.
+Mention relevant data quality issues (e.g. missing KYC, missing UTR) if retrieved from tools.
 
 ### Analyst Conclusion
-"These signals make this entity an investigation candidate." (Use cautious language. Never conclude confirmed fraud).
+[Provide a cautious conclusion. e.g. "These observed signals make this entity an investigation candidate. They do not establish confirmed fraud."]
 """
 
-TOOLS_SCHEMA = [
-    {
+def _make_tool(name: str, desc: str, param: str = None):
+    schema = {
         "type": "function",
         "function": {
-            "name": "get_cluster",
-            "description": "Retrieve an investigation candidate cluster by ID.",
-            "parameters": {
-                "type": "object",
-                "properties": {"cluster_id": {"type": "string"}},
-                "required": ["cluster_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_cluster_members",
-            "description": "Retrieve users and merchants associated with a cluster.",
-            "parameters": {
-                "type": "object",
-                "properties": {"cluster_id": {"type": "string"}},
-                "required": ["cluster_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_user",
-            "description": "Retrieve a user profile and their risk score.",
-            "parameters": {
-                "type": "object",
-                "properties": {"user_id": {"type": "string"}},
-                "required": ["user_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_merchant",
-            "description": "Retrieve a merchant profile and their risk score.",
-            "parameters": {
-                "type": "object",
-                "properties": {"merchant_id": {"type": "string"}},
-                "required": ["merchant_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_transaction",
-            "description": "Retrieve transaction details and risk signals.",
-            "parameters": {
-                "type": "object",
-                "properties": {"txn_id": {"type": "string"}},
-                "required": ["txn_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_user_transactions",
-            "description": "Retrieve top recent/risky transactions for a user.",
-            "parameters": {
-                "type": "object",
-                "properties": {"user_id": {"type": "string"}},
-                "required": ["user_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_merchant_transactions",
-            "description": "Retrieve top recent/risky transactions for a merchant.",
-            "parameters": {
-                "type": "object",
-                "properties": {"merchant_id": {"type": "string"}},
-                "required": ["merchant_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_user_chargebacks",
-            "description": "Retrieve chargebacks filed by a specific user.",
-            "parameters": {
-                "type": "object",
-                "properties": {"user_id": {"type": "string"}},
-                "required": ["user_id"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_top_investigation_candidates",
-            "description": "Retrieve top N highest risk entities.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "entity_type": {"type": "string", "enum": ["cluster", "user", "merchant"]}
-                },
-                "required": ["entity_type"]
-            }
+            "name": name,
+            "description": desc,
+            "parameters": {"type": "object", "properties": {}, "required": []}
         }
     }
+    if param:
+        schema["function"]["parameters"]["properties"][param] = {"type": "string"}
+        schema["function"]["parameters"]["required"] = [param]
+    return schema
+
+TOOLS_SCHEMA = [
+    _make_tool("get_cluster", "Retrieve cluster details", "cluster_id"),
+    _make_tool("get_cluster_members", "Retrieve cluster members", "cluster_id"),
+    _make_tool("get_user", "Retrieve user profile details", "user_id"),
+    _make_tool("get_user_transactions", "Retrieve user transactions", "user_id"),
+    _make_tool("get_user_chargebacks", "Retrieve user chargebacks", "user_id"),
+    _make_tool("get_user_merchants", "Retrieve user connected merchants", "user_id"),
+    _make_tool("get_user_clusters", "Retrieve user connected clusters", "user_id"),
+    _make_tool("get_merchant", "Retrieve merchant profile details", "merchant_id"),
+    _make_tool("get_merchant_transactions", "Retrieve merchant transactions", "merchant_id"),
+    _make_tool("get_merchant_chargebacks", "Retrieve merchant chargebacks", "merchant_id"),
+    _make_tool("get_merchant_users", "Retrieve merchant connected users", "merchant_id"),
+    _make_tool("get_merchant_clusters", "Retrieve merchant connected clusters", "merchant_id"),
+    _make_tool("get_transaction", "Retrieve transaction details", "txn_id"),
+    _make_tool("get_transaction_chargebacks", "Retrieve transaction chargeback history", "txn_id"),
+    _make_tool("get_transaction_risk", "Retrieve transaction risk scores", "txn_id"),
+    _make_tool("get_user_risk", "Retrieve user risk scores", "user_id"),
+    _make_tool("get_merchant_risk", "Retrieve merchant risk scores", "merchant_id"),
+    _make_tool("get_cluster_risk", "Retrieve cluster risk scores", "cluster_id"),
+    _make_tool("get_top_investigation_candidates", "Get top risky clusters to investigate"),
 ]
+
+# We need custom tools for get_risk_signals and get_data_quality_context which take two parameters
+TOOLS_SCHEMA.append({
+    "type": "function",
+    "function": {
+        "name": "get_risk_signals",
+        "description": "Retrieve behavioral risk signals and explanation",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "entity_type": {"type": "string", "enum": ["cluster", "user", "merchant", "transaction"]},
+                "entity_id": {"type": "string"}
+            },
+            "required": ["entity_type", "entity_id"]
+        }
+    }
+})
+
+TOOLS_SCHEMA.append({
+    "type": "function",
+    "function": {
+        "name": "get_data_quality_context",
+        "description": "Retrieve data quality limitations",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "entity_type": {"type": "string", "enum": ["transaction"]},
+                "entity_id": {"type": "string"}
+            },
+            "required": ["entity_type", "entity_id"]
+        }
+    }
+})
 
 TOOL_FUNCTIONS = {
     "get_cluster": data_tools.get_cluster,
     "get_cluster_members": data_tools.get_cluster_members,
     "get_user": data_tools.get_user,
-    "get_merchant": data_tools.get_merchant,
-    "get_transaction": data_tools.get_transaction,
     "get_user_transactions": data_tools.get_user_transactions,
-    "get_merchant_transactions": data_tools.get_merchant_transactions,
     "get_user_chargebacks": data_tools.get_user_chargebacks,
+    "get_user_merchants": data_tools.get_user_merchants,
+    "get_user_clusters": data_tools.get_user_clusters,
+    "get_merchant": data_tools.get_merchant,
+    "get_merchant_transactions": data_tools.get_merchant_transactions,
+    "get_merchant_chargebacks": data_tools.get_merchant_chargebacks,
+    "get_merchant_users": data_tools.get_merchant_users,
+    "get_merchant_clusters": data_tools.get_merchant_clusters,
+    "get_transaction": data_tools.get_transaction,
+    "get_transaction_chargebacks": data_tools.get_transaction_chargebacks,
+    "get_transaction_risk": data_tools.get_transaction_risk,
+    "get_user_risk": data_tools.get_user_risk,
+    "get_merchant_risk": data_tools.get_merchant_risk,
+    "get_cluster_risk": data_tools.get_cluster_risk,
     "get_top_investigation_candidates": data_tools.get_top_investigation_candidates,
+    "get_risk_signals": data_tools.get_risk_signals,
+    "get_data_quality_context": data_tools.get_data_quality_context,
 }
 
 def investigate(query: str) -> Dict[str, Any]:
-    """Main entrypoint for the AI investigation agent."""
     try:
         client, model = get_llm_client()
     except ValueError as e:
@@ -196,8 +160,7 @@ def investigate(query: str) -> Dict[str, Any]:
         {"role": "user", "content": query}
     ]
 
-    # Max 5 tool call iterations to prevent infinite loops
-    for _ in range(5):
+    for _ in range(8):
         response = client.chat.completions.create(
             model=model,
             messages=messages,
@@ -207,16 +170,17 @@ def investigate(query: str) -> Dict[str, Any]:
         
         message = response.choices[0].message
         if not message.tool_calls:
-            # Done, LLM provided final answer
             return {"response": message.content}
             
-        messages.append(message) # Add LLM's tool call message
+        messages.append(message)
         
-        # Execute tools
         for tool_call in message.tool_calls:
             func_name = tool_call.function.name
-            args = json.loads(tool_call.function.arguments)
-            
+            try:
+                args = json.loads(tool_call.function.arguments)
+            except json.JSONDecodeError:
+                args = {}
+                
             if func_name in TOOL_FUNCTIONS:
                 try:
                     result = TOOL_FUNCTIONS[func_name](**args)

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 DATA_DIR = Path("dashboard/public/data")
 
@@ -14,28 +14,21 @@ _data: Dict[str, Any] = {
     "cluster_members_map": {}
 }
 
-# Indexes
 _txns_by_user: Dict[str, List[Dict]] = {}
 _txns_by_merchant: Dict[str, List[Dict]] = {}
 
 def load_data():
     """Load the slim JSON files into memory."""
     global _data, _txns_by_user, _txns_by_merchant
-    
-    if _data["transactions"]:
-        return # Already loaded
-        
+    if _data["transactions"]: return
     try:
         with open(DATA_DIR / "finguard_transactions_slim.json") as f:
             txns = json.load(f)
             _data["transactions"] = {t["txn_id_normalized"]: t for t in txns}
-            
             for t in txns:
-                uid = t.get("user_id_normalized")
-                mid = t.get("merchant_id_normalized")
-                if uid:
+                if uid := t.get("user_id_normalized"):
                     _txns_by_user.setdefault(uid, []).append(t)
-                if mid:
+                if mid := t.get("merchant_id_normalized"):
                     _txns_by_merchant.setdefault(mid, []).append(t)
                     
         with open(DATA_DIR / "users_slim.json") as f:
@@ -56,223 +49,262 @@ def load_data():
             
         with open(DATA_DIR / "cluster_members_map.json") as f:
             _data["cluster_members_map"] = json.load(f)
-            
     except Exception as e:
         print(f"Error loading data: {e}")
-        # In a real scenario we'd raise, but we want tools to gracefully fail if files are missing.
 
-# Ensure data is loaded on import
 load_data()
 
-def _add_provenance(data: Dict, source: str) -> Dict:
-    """Helper to add provenance if needed, though for the LLM keeping it flat might be better.
-       We will follow the phase 4 request by adding source information.
-    """
-    res = {"evidence": data, "provenance": {"source": source}}
-    return res
+def _evidence(metric: str, value: Any, source: str, field: str) -> Dict[str, Any]:
+    return {"metric": metric, "value": value, "source": source, "field": field}
 
 def get_cluster(cluster_id: str) -> Dict[str, Any]:
     """Retrieve an investigation candidate cluster by ID."""
     cluster = _data["clusters"].get(cluster_id)
     if not cluster:
-        return {"error": f"Cluster {cluster_id} not found. Insufficient evidence in the available dataset."}
+        return {"error": "Insufficient evidence in the available FinGuard dataset."}
         
     return {
-        "cluster_id": cluster["cluster_id"],
-        "risk_level": cluster.get("risk_level"),
-        "cluster_risk_score": cluster.get("cluster_risk_score"),
-        "cluster_chargeback_rate": cluster.get("cluster_chargeback_rate"),
-        "chargeback_count": cluster.get("chargeback_count"),
-        "disputed_amount_ratio": cluster.get("disputed_amount_ratio"),
-        "top_signals": cluster.get("top_signals"),
-        "explanation": cluster.get("explanation"),
-        "n_users": cluster.get("n_users"),
-        "n_merchants": cluster.get("n_merchants"),
-        "n_transactions": cluster.get("n_transactions"),
-        "_provenance": {"source": "suspicious_clusters.csv"}
+        "entity_type": "cluster",
+        "entity_id": cluster_id,
+        "evidence": [
+            _evidence("cluster_risk_level", cluster.get("risk_level"), "suspicious_clusters.csv", "risk_level"),
+            _evidence("cluster_risk_score", cluster.get("cluster_risk_score"), "suspicious_clusters.csv", "cluster_risk_score"),
+            _evidence("cluster_chargeback_rate", cluster.get("cluster_chargeback_rate"), "suspicious_clusters.csv", "cluster_chargeback_rate"),
+            _evidence("chargeback_count", cluster.get("chargeback_count"), "suspicious_clusters.csv", "chargeback_count"),
+            _evidence("disputed_amount_ratio", cluster.get("disputed_amount_ratio"), "suspicious_clusters.csv", "disputed_amount_ratio"),
+            _evidence("n_transactions", cluster.get("n_transactions"), "suspicious_clusters.csv", "n_transactions"),
+            _evidence("n_users", cluster.get("n_users"), "suspicious_clusters.csv", "n_users"),
+            _evidence("n_merchants", cluster.get("n_merchants"), "suspicious_clusters.csv", "n_merchants")
+        ]
     }
 
 def get_cluster_members(cluster_id: str) -> Dict[str, Any]:
-    """Retrieve users and merchants associated with a cluster."""
     members = _data["cluster_members_map"].get(cluster_id)
     if not members:
-        return {"error": f"Members for cluster {cluster_id} not found."}
-    
+        return {"error": "Insufficient evidence in the available FinGuard dataset."}
     return {
-        "cluster_id": cluster_id,
-        "users": members.get("users", []),
-        "merchants": members.get("merchants", []),
-        "_provenance": {"source": "cluster_members_map.json"}
+        "entity_type": "cluster",
+        "entity_id": cluster_id,
+        "evidence": [
+            _evidence("users", members.get("users", []), "cluster_members_map.json", "users"),
+            _evidence("merchants", members.get("merchants", []), "cluster_members_map.json", "merchants")
+        ]
     }
 
 def get_user(user_id: str) -> Dict[str, Any]:
-    """Retrieve a user profile and their retrospective risk score."""
     user = _data["users"].get(user_id)
     if not user:
-        return {"error": f"User {user_id} not found. Insufficient evidence in the available dataset."}
-        
+        return {"error": "Insufficient evidence in the available FinGuard dataset."}
     return {
-        "user_id": user["user_id_normalized"],
-        "transaction_count": user.get("transaction_count"),
-        "total_transaction_amount": user.get("total_transaction_amount"),
-        "chargeback_count": user.get("chargeback_count"),
-        "total_disputed_amount": user.get("total_disputed_amount"),
-        "kyc_status_clean": user.get("kyc_status_clean"),
-        "risk_level": user.get("risk_level"),
-        "retrospective_risk_score": user.get("retrospective_risk_score"),
-        "explanation": user.get("explanation"),
-        "top_signals": [user.get(f"top_risk_signal_{i}") for i in range(1, 4) if user.get(f"top_risk_signal_{i}")],
-        "_provenance": {"source": "users_analytics.csv"}
+        "entity_type": "user",
+        "entity_id": user_id,
+        "evidence": [
+            _evidence("transaction_count", user.get("transaction_count"), "users_analytics.csv", "transaction_count"),
+            _evidence("total_transaction_amount", user.get("total_transaction_amount"), "users_analytics.csv", "total_transaction_amount"),
+            _evidence("chargeback_count", user.get("chargeback_count"), "users_analytics.csv", "chargeback_count"),
+            _evidence("total_disputed_amount", user.get("total_disputed_amount"), "users_analytics.csv", "total_disputed_amount"),
+            _evidence("kyc_status", user.get("kyc_status_clean"), "users_analytics.csv", "kyc_status_clean")
+        ]
     }
 
 def get_merchant(merchant_id: str) -> Dict[str, Any]:
-    """Retrieve a merchant profile and their retrospective risk score."""
     merchant = _data["merchants"].get(merchant_id)
     if not merchant:
-        return {"error": f"Merchant {merchant_id} not found. Insufficient evidence in the available dataset."}
-        
+        return {"error": "Insufficient evidence in the available FinGuard dataset."}
     return {
-        "merchant_id": merchant["merchant_id_normalized"],
-        "merchant_category_clean": merchant.get("merchant_category_clean"),
-        "merchant_status_clean": merchant.get("merchant_status_clean"),
-        "transaction_count": merchant.get("transaction_count"),
-        "total_transaction_amount": merchant.get("total_transaction_amount"),
-        "chargeback_rate": merchant.get("chargeback_rate"),
-        "disputed_amount_ratio": merchant.get("disputed_amount_ratio"),
-        "risk_level": merchant.get("risk_level"),
-        "retrospective_risk_score": merchant.get("retrospective_risk_score"),
-        "explanation": merchant.get("explanation"),
-        "top_signals": [merchant.get(f"top_risk_signal_{i}") for i in range(1, 4) if merchant.get(f"top_risk_signal_{i}")],
-        "_provenance": {"source": "merchants_analytics.csv"}
+        "entity_type": "merchant",
+        "entity_id": merchant_id,
+        "evidence": [
+            _evidence("merchant_category", merchant.get("merchant_category_clean"), "merchants_analytics.csv", "merchant_category_clean"),
+            _evidence("transaction_count", merchant.get("transaction_count"), "merchants_analytics.csv", "transaction_count"),
+            _evidence("total_transaction_amount", merchant.get("total_transaction_amount"), "merchants_analytics.csv", "total_transaction_amount"),
+            _evidence("chargeback_rate", merchant.get("chargeback_rate"), "merchants_analytics.csv", "chargeback_rate"),
+            _evidence("disputed_amount_ratio", merchant.get("disputed_amount_ratio"), "merchants_analytics.csv", "disputed_amount_ratio")
+        ]
     }
 
 def get_transaction(txn_id: str) -> Dict[str, Any]:
-    """Retrieve transaction details including transaction-time risk."""
     txn = _data["transactions"].get(txn_id)
     if not txn:
-        return {"error": f"Transaction {txn_id} not found. Insufficient evidence in the available dataset."}
-        
+        return {"error": "Insufficient evidence in the available FinGuard dataset."}
     return {
-        "txn_id": txn["txn_id_normalized"],
-        "user_id": txn.get("user_id_normalized"),
-        "merchant_id": txn.get("merchant_id_normalized"),
-        "amount_numeric": txn.get("amount_numeric"),
-        "status_clean": txn.get("status_clean"),
-        "timestamp_clean": txn.get("timestamp_clean"),
-        "has_chargeback": txn.get("has_chargeback"),
-        "transaction_time_risk_level": txn.get("transaction_time_risk_level"),
-        "transaction_time_risk_score": txn.get("transaction_time_risk_score"),
-        "retrospective_risk_level": txn.get("retrospective_risk_level"),
-        "explanation": txn.get("explanation"),
-        "top_signals": [txn.get(f"top_risk_signal_{i}") for i in range(1, 4) if txn.get(f"top_risk_signal_{i}")],
-        "data_quality_issues": {
-            "utr_missing": txn.get("utr_missing_flag"),
-            "amount_negative": txn.get("amount_negative_flag"),
-            "no_kyc_match": not txn.get("transaction_has_kyc"),
-            "no_merchant_match": not txn.get("transaction_has_merchant")
-        },
-        "_provenance": {"source": "finguard_transactions.csv"}
+        "entity_type": "transaction",
+        "entity_id": txn_id,
+        "evidence": [
+            _evidence("user_id", txn.get("user_id_normalized"), "finguard_transactions.csv", "user_id_normalized"),
+            _evidence("merchant_id", txn.get("merchant_id_normalized"), "finguard_transactions.csv", "merchant_id_normalized"),
+            _evidence("amount_numeric", txn.get("amount_numeric"), "finguard_transactions.csv", "amount_numeric"),
+            _evidence("status_clean", txn.get("status_clean"), "finguard_transactions.csv", "status_clean"),
+            _evidence("timestamp_clean", txn.get("timestamp_clean"), "finguard_transactions.csv", "timestamp_clean"),
+            _evidence("has_chargeback", txn.get("has_chargeback"), "finguard_transactions.csv", "has_chargeback")
+        ]
     }
 
 def get_user_transactions(user_id: str, limit: int = 10) -> Dict[str, Any]:
-    """Retrieve top recent/risky transactions for a user."""
     txns = _txns_by_user.get(user_id, [])
-    if not txns:
-        return {"error": f"No transactions found for user {user_id}."}
-        
-    # Sort by risk score descending, then timestamp descending
-    sorted_txns = sorted(txns, key=lambda t: (t.get("transaction_time_risk_score", 0.0), t.get("timestamp_clean", "")), reverse=True)
-    
-    result = []
-    for t in sorted_txns[:limit]:
-        result.append({
-            "txn_id": t["txn_id_normalized"],
-            "merchant_id": t.get("merchant_id_normalized"),
-            "amount_numeric": t.get("amount_numeric"),
-            "has_chargeback": t.get("has_chargeback"),
-            "transaction_time_risk_level": t.get("transaction_time_risk_level")
-        })
-        
-    return {
-        "user_id": user_id,
-        "total_transactions": len(txns),
-        "returned_transactions": len(result),
-        "transactions": result,
-        "_provenance": {"source": "finguard_transactions.csv"}
-    }
+    if not txns: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    sorted_txns = sorted(txns, key=lambda t: (t.get("transaction_time_risk_score", 0.0), t.get("timestamp_clean", "")), reverse=True)[:limit]
+    res = [{"txn_id": t["txn_id_normalized"], "amount": t.get("amount_numeric")} for t in sorted_txns]
+    return {"entity_type": "user", "entity_id": user_id, "evidence": [_evidence("recent_risky_transactions", res, "finguard_transactions.csv", "multiple")]}
 
 def get_merchant_transactions(merchant_id: str, limit: int = 10) -> Dict[str, Any]:
-    """Retrieve top recent/risky transactions for a merchant."""
     txns = _txns_by_merchant.get(merchant_id, [])
-    if not txns:
-        return {"error": f"No transactions found for merchant {merchant_id}."}
-        
-    sorted_txns = sorted(txns, key=lambda t: (t.get("transaction_time_risk_score", 0.0), t.get("timestamp_clean", "")), reverse=True)
-    
-    result = []
-    for t in sorted_txns[:limit]:
-        result.append({
-            "txn_id": t["txn_id_normalized"],
-            "user_id": t.get("user_id_normalized"),
-            "amount_numeric": t.get("amount_numeric"),
-            "has_chargeback": t.get("has_chargeback"),
-            "transaction_time_risk_level": t.get("transaction_time_risk_level")
-        })
-        
-    return {
-        "merchant_id": merchant_id,
-        "total_transactions": len(txns),
-        "returned_transactions": len(result),
-        "transactions": result,
-        "_provenance": {"source": "finguard_transactions.csv"}
-    }
+    if not txns: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    sorted_txns = sorted(txns, key=lambda t: (t.get("transaction_time_risk_score", 0.0), t.get("timestamp_clean", "")), reverse=True)[:limit]
+    res = [{"txn_id": t["txn_id_normalized"], "amount": t.get("amount_numeric")} for t in sorted_txns]
+    return {"entity_type": "merchant", "entity_id": merchant_id, "evidence": [_evidence("recent_risky_transactions", res, "finguard_transactions.csv", "multiple")]}
 
 def get_user_chargebacks(user_id: str) -> Dict[str, Any]:
-    """Retrieve all chargebacks filed by a specific user."""
-    txns = _txns_by_user.get(user_id, [])
-    cb_txns = [t for t in txns if t.get("has_chargeback")]
-    
-    if not cb_txns:
-        return {"message": f"No chargebacks found for user {user_id}."}
-        
-    results = []
-    for t in cb_txns:
-        tid = t["txn_id_normalized"]
-        cb = _data["chargebacks"].get(tid)
-        if cb:
-            results.append({
-                "txn_id": tid,
-                "merchant_id": t.get("merchant_id_normalized"),
-                "chargeback_count": cb.get("chargeback_count"),
-                "total_disputed_amount": cb.get("total_disputed_amount"),
-                "max_severity": cb.get("max_severity")
-            })
-            
+    txns = [t for t in _txns_by_user.get(user_id, []) if t.get("has_chargeback")]
+    if not txns: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    res = [{"txn_id": t["txn_id_normalized"], "chargeback_count": _data["chargebacks"].get(t["txn_id_normalized"], {}).get("chargeback_count")} for t in txns]
+    return {"entity_type": "user", "entity_id": user_id, "evidence": [_evidence("chargebacked_transactions", res, "chargebacks_aggregated.csv", "multiple")]}
+
+def get_merchant_chargebacks(merchant_id: str) -> Dict[str, Any]:
+    txns = [t for t in _txns_by_merchant.get(merchant_id, []) if t.get("has_chargeback")]
+    if not txns: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    res = [{"txn_id": t["txn_id_normalized"], "chargeback_count": _data["chargebacks"].get(t["txn_id_normalized"], {}).get("chargeback_count")} for t in txns]
+    return {"entity_type": "merchant", "entity_id": merchant_id, "evidence": [_evidence("chargebacked_transactions", res, "chargebacks_aggregated.csv", "multiple")]}
+
+def get_transaction_chargebacks(txn_id: str) -> Dict[str, Any]:
+    cb = _data["chargebacks"].get(txn_id)
+    if not cb: return {"error": "Insufficient evidence in the available FinGuard dataset."}
     return {
-        "user_id": user_id,
-        "total_chargebacked_transactions": len(results),
-        "chargebacks": results,
-        "_provenance": {"source": "chargebacks_aggregated.csv"}
+        "entity_type": "transaction", "entity_id": txn_id,
+        "evidence": [
+            _evidence("chargeback_count", cb.get("chargeback_count"), "chargebacks_aggregated.csv", "chargeback_count"),
+            _evidence("total_disputed_amount", cb.get("total_disputed_amount"), "chargebacks_aggregated.csv", "total_disputed_amount"),
+            _evidence("max_severity", cb.get("max_severity"), "chargebacks_aggregated.csv", "max_severity")
+        ]
     }
 
-def get_top_investigation_candidates(entity_type: str = "cluster", limit: int = 5) -> Dict[str, Any]:
-    """Retrieve top N highest risk entities of a given type ('cluster', 'user', 'merchant')."""
+def get_user_merchants(user_id: str) -> Dict[str, Any]:
+    txns = _txns_by_user.get(user_id, [])
+    m_set = list(set(t.get("merchant_id_normalized") for t in txns if t.get("merchant_id_normalized")))
+    if not m_set: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {"entity_type": "user", "entity_id": user_id, "evidence": [_evidence("connected_merchants", m_set, "finguard_transactions.csv", "merchant_id_normalized")]}
+
+def get_merchant_users(merchant_id: str) -> Dict[str, Any]:
+    txns = _txns_by_merchant.get(merchant_id, [])
+    u_set = list(set(t.get("user_id_normalized") for t in txns if t.get("user_id_normalized")))
+    if not u_set: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {"entity_type": "merchant", "entity_id": merchant_id, "evidence": [_evidence("connected_users", u_set, "finguard_transactions.csv", "user_id_normalized")]}
+
+def get_user_clusters(user_id: str) -> Dict[str, Any]:
+    c_set = [cid for cid, m in _data["cluster_members_map"].items() if user_id in m.get("users", [])]
+    if not c_set: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {"entity_type": "user", "entity_id": user_id, "evidence": [_evidence("suspicious_clusters", c_set, "cluster_members_map.json", "users")]}
+
+def get_merchant_clusters(merchant_id: str) -> Dict[str, Any]:
+    c_set = [cid for cid, m in _data["cluster_members_map"].items() if merchant_id in m.get("merchants", [])]
+    if not c_set: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {"entity_type": "merchant", "entity_id": merchant_id, "evidence": [_evidence("suspicious_clusters", c_set, "cluster_members_map.json", "merchants")]}
+
+def get_transaction_risk(txn_id: str) -> Dict[str, Any]:
+    txn = _data["transactions"].get(txn_id)
+    if not txn: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {
+        "entity_type": "transaction", "entity_id": txn_id,
+        "evidence": [
+            _evidence("transaction_time_risk_score", txn.get("transaction_time_risk_score"), "transaction_risk_scores.csv", "transaction_time_risk_score"),
+            _evidence("transaction_time_risk_level", txn.get("transaction_time_risk_level"), "transaction_risk_scores.csv", "transaction_time_risk_level"),
+            _evidence("retrospective_risk_score", txn.get("retrospective_risk_score"), "transaction_risk_scores.csv", "retrospective_risk_score"),
+            _evidence("retrospective_risk_level", txn.get("retrospective_risk_level"), "transaction_risk_scores.csv", "retrospective_risk_level")
+        ]
+    }
+
+def get_user_risk(user_id: str) -> Dict[str, Any]:
+    user = _data["users"].get(user_id)
+    if not user: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {
+        "entity_type": "user", "entity_id": user_id,
+        "evidence": [
+            _evidence("risk_score", user.get("retrospective_risk_score"), "user_risk_scores.csv", "retrospective_risk_score"),
+            _evidence("risk_level", user.get("risk_level"), "user_risk_scores.csv", "risk_level")
+        ]
+    }
+
+def get_merchant_risk(merchant_id: str) -> Dict[str, Any]:
+    merchant = _data["merchants"].get(merchant_id)
+    if not merchant: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {
+        "entity_type": "merchant", "entity_id": merchant_id,
+        "evidence": [
+            _evidence("risk_score", merchant.get("retrospective_risk_score"), "merchant_risk_scores.csv", "retrospective_risk_score"),
+            _evidence("risk_level", merchant.get("risk_level"), "merchant_risk_scores.csv", "risk_level")
+        ]
+    }
+
+def get_cluster_risk(cluster_id: str) -> Dict[str, Any]:
+    cluster = _data["clusters"].get(cluster_id)
+    if not cluster: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    return {
+        "entity_type": "cluster", "entity_id": cluster_id,
+        "evidence": [
+            _evidence("risk_score", cluster.get("cluster_risk_score"), "suspicious_clusters.csv", "cluster_risk_score"),
+            _evidence("risk_level", cluster.get("risk_level"), "suspicious_clusters.csv", "risk_level")
+        ]
+    }
+
+def get_risk_signals(entity_type: str, entity_id: str) -> Dict[str, Any]:
     if entity_type == "cluster":
-        clusters = list(_data["clusters"].values())
-        sorted_c = sorted(clusters, key=lambda c: c.get("cluster_risk_score", 0.0), reverse=True)
-        res = [{"cluster_id": c["cluster_id"], "risk_level": c.get("risk_level"), "score": c.get("cluster_risk_score")} for c in sorted_c[:limit]]
-        return {"entity_type": "cluster", "candidates": res, "_provenance": {"source": "suspicious_clusters.csv"}}
-        
+        item = _data["clusters"].get(entity_id)
+        source = "suspicious_clusters.csv"
+        sig_field = "top_signals"
+        if item:
+            signals = item.get("top_signals", "").split("|")
+            explanation = item.get("explanation")
     elif entity_type == "user":
-        users = list(_data["users"].values())
-        sorted_u = sorted(users, key=lambda u: u.get("retrospective_risk_score", 0.0), reverse=True)
-        res = [{"user_id": u["user_id_normalized"], "risk_level": u.get("risk_level"), "score": u.get("retrospective_risk_score")} for u in sorted_u[:limit]]
-        return {"entity_type": "user", "candidates": res, "_provenance": {"source": "user_risk_scores.csv"}}
-        
+        item = _data["users"].get(entity_id)
+        source = "user_risk_scores.csv"
+        sig_field = "top_risk_signal"
+        if item:
+            signals = [item.get(f"top_risk_signal_{i}") for i in range(1,4) if item.get(f"top_risk_signal_{i}")]
+            explanation = item.get("explanation")
     elif entity_type == "merchant":
-        merchants = list(_data["merchants"].values())
-        sorted_m = sorted(merchants, key=lambda m: m.get("retrospective_risk_score", 0.0), reverse=True)
-        res = [{"merchant_id": m["merchant_id_normalized"], "risk_level": m.get("risk_level"), "score": m.get("retrospective_risk_score")} for m in sorted_m[:limit]]
-        return {"entity_type": "merchant", "candidates": res, "_provenance": {"source": "merchant_risk_scores.csv"}}
+        item = _data["merchants"].get(entity_id)
+        source = "merchant_risk_scores.csv"
+        sig_field = "top_risk_signal"
+        if item:
+            signals = [item.get(f"top_risk_signal_{i}") for i in range(1,4) if item.get(f"top_risk_signal_{i}")]
+            explanation = item.get("explanation")
+    elif entity_type == "transaction":
+        item = _data["transactions"].get(entity_id)
+        source = "transaction_risk_scores.csv"
+        sig_field = "top_risk_signal"
+        if item:
+            signals = [item.get(f"top_risk_signal_{i}") for i in range(1,4) if item.get(f"top_risk_signal_{i}")]
+            explanation = item.get("explanation")
+    else:
+        return {"error": "Unknown entity type"}
         
-    return {"error": f"Unknown entity type: {entity_type}. Use 'cluster', 'user', or 'merchant'."}
+    if not item: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+    
+    return {
+        "entity_type": entity_type, "entity_id": entity_id,
+        "evidence": [
+            _evidence("risk_signals", signals, source, sig_field),
+            _evidence("explanation", explanation, source, "explanation")
+        ]
+    }
+
+def get_data_quality_context(entity_type: str, entity_id: str) -> Dict[str, Any]:
+    if entity_type == "transaction":
+        txn = _data["transactions"].get(entity_id)
+        if not txn: return {"error": "Insufficient evidence in the available FinGuard dataset."}
+        issues = []
+        if txn.get("utr_missing_flag"): issues.append("Missing UTR")
+        if txn.get("amount_negative_flag"): issues.append("Negative amount")
+        if not txn.get("transaction_has_kyc"): issues.append("Missing KYC enrichment")
+        if not txn.get("transaction_has_merchant"): issues.append("Missing merchant enrichment")
+        return {
+            "entity_type": "transaction", "entity_id": entity_id,
+            "evidence": [_evidence("data_quality_issues", issues, "finguard_transactions.csv", "flags")]
+        }
+    return {"error": f"Data quality context not explicitly modeled for {entity_type} in slim JSONs."}
+
+def get_top_investigation_candidates() -> Dict[str, Any]:
+    clusters = list(_data["clusters"].values())
+    sorted_c = sorted(clusters, key=lambda c: c.get("cluster_risk_score", 0.0), reverse=True)
+    res = [{"cluster_id": c["cluster_id"], "risk_level": c.get("risk_level"), "score": c.get("cluster_risk_score")} for c in sorted_c[:5]]
+    return {"entity_type": "system", "entity_id": "top_clusters", "evidence": [_evidence("top_clusters", res, "suspicious_clusters.csv", "cluster_risk_score")]}
