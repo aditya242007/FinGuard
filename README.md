@@ -137,8 +137,3 @@ reports/integration_report.md
 
 All metrics handle division by zero safely (result = 0).
 
----
-
-## Note
-
-All data is synthetic, generated for educational and datathon purposes only. No real customer, merchant, or financial data is used.
