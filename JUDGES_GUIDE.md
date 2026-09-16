@@ -29,7 +29,7 @@
 
 ---
 
-## 1. Executive Summary (3-Minute Read)
+## 1. Executive Summary 
 
 FinGuard is a production-grade **UPI Fraud Ring & Merchant Risk Intelligence Platform** built for high-throughput digital payments. The system ingests messy, disparate financial logs and turns them into an explainable, graph-powered investigation engine and executive intelligence suite.
 
