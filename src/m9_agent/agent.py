@@ -4,19 +4,54 @@ from typing import Dict, Any, List
 import openai
 
 from src.m9_agent import data_tools
+from src.m9_agent.safety_guard import validate_response
 
 def get_llm_client():
+    """Return (openai.OpenAI client, model_name) using the following priority:
+
+    1. Generic provider – if FIN_GUARD_LLM_PROVIDER is set (e.g. "gpt-oss-120b"),
+       uses FIN_GUARD_LLM_BASE_URL and FIN_GUARD_LLM_API_KEY (falls back to
+       OPENAI_API_KEY) to build an OpenAI-compatible client, and
+       FIN_GUARD_LLM_MODEL as the model name (defaults to FIN_GUARD_LLM_PROVIDER).
+
+    2. Gemini fallback – if only GEMINI_API_KEY is set, routes through Google's
+       OpenAI-compatible adapter with gemini-2.5-flash.
+
+    3. OpenAI default – if only OPENAI_API_KEY is set, uses gpt-4o-mini.
+
+    Raises ValueError if no API key can be resolved.
+    """
+    # --- 1. Generic / GPT-OSS-120B path ---
+    provider = os.environ.get("FIN_GUARD_LLM_PROVIDER", "").strip()
+    if provider:
+        api_key = (
+            os.environ.get("FIN_GUARD_LLM_API_KEY")
+            or os.environ.get("OPENAI_API_KEY")
+        )
+        if not api_key:
+            raise ValueError(
+                f"FIN_GUARD_LLM_PROVIDER={provider!r} is set but no API key found. "
+                "Set FIN_GUARD_LLM_API_KEY or OPENAI_API_KEY."
+            )
+        model = os.environ.get("FIN_GUARD_LLM_MODEL") or provider
+        base_url = os.environ.get("FIN_GUARD_LLM_BASE_URL") or None  # None → openai default
+        kwargs = {"api_key": api_key}
+        if base_url:
+            kwargs["base_url"] = base_url
+        return openai.OpenAI(**kwargs), model
+
+    # --- 2. Legacy Gemini path ---
+    if os.environ.get("GEMINI_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
+        return openai.OpenAI(
+            api_key=os.environ["GEMINI_API_KEY"],
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+        ), "gemini-3.6-flash"  # gemini-2.5-flash deprecated 2026-09-15; replaced per Google error msg
+
+    # --- 3. Legacy OpenAI path ---
     api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("Missing API key. Set OPENAI_API_KEY or GEMINI_API_KEY.")
-        
-    if os.environ.get("GEMINI_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
-        return openai.OpenAI(
-            api_key=api_key,
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-        ), "gemini-2.5-flash"
-    else:
-        return openai.OpenAI(api_key=api_key), "gpt-4o-mini"
+    return openai.OpenAI(api_key=api_key), "gpt-4o-mini"
 
 SYSTEM_PROMPT = """You are FINguard AI, an Explainable AI Investigation Assistant.
 Your job is to investigate entities using the deterministic data tools provided, which fetch real evidence from M3-M7 analytical layers.
@@ -161,16 +196,63 @@ def investigate(query: str) -> Dict[str, Any]:
     ]
 
     for _ in range(8):
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            tools=TOOLS_SCHEMA,
-            tool_choice="auto"
-        )
+        for attempt in range(5):
+            try:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    tools=TOOLS_SCHEMA,
+                    tool_choice="auto"
+                )
+                break
+            except Exception as e:
+                if "429" in str(e) or "Quota" in str(e) or "RateLimit" in str(type(e).__name__):
+                    if attempt == 4:
+                        raise
+                    import time
+                    print(f"[Rate limit hit, sleeping 60s... (attempt {attempt+1}/5)]")
+                    time.sleep(60)
+                else:
+                    raise
         
         message = response.choices[0].message
         if not message.tool_calls:
-            return {"response": message.content}
+            # ── M10.2 Safety Guard ────────────────────────────────────────
+            # Validate the LLM text BEFORE returning it to the caller.
+            # On violation we attempt ONE controlled regeneration; if that
+            # also violates we return the deterministic SAFE_FALLBACK.
+            raw_text = message.content or ""
+
+            def _regen_callback():
+                """One controlled regeneration with an explicit safety reminder."""
+                regen_messages = list(messages) + [
+                    {
+                        "role": "user",
+                        "content": (
+                            "SAFETY REMINDER: Your previous response used language that "
+                            "implies a confirmed fraud determination. "
+                            "FinGuard has NO ground-truth fraud labels. "
+                            "Rewrite using ONLY these terms: "
+                            "'elevated-risk investigation candidate', "
+                            "'risk signal', 'observable evidence', "
+                            "'investigation candidate', 'data limitations'. "
+                            "Do NOT use 'confirmed fraud', 'definitely fraud', "
+                            "'is fraud', 'was fraudulent', 'fraud probability', "
+                            "'100% fraud', 'proven fraud', or 'guilty'."
+                        ),
+                    }
+                ]
+                regen_resp = client.chat.completions.create(
+                    model=model,
+                    messages=regen_messages,
+                    tools=TOOLS_SCHEMA,
+                    tool_choice="auto",
+                )
+                regen_msg = regen_resp.choices[0].message
+                return regen_msg.content or ""
+
+            safe_text = validate_response(raw_text, regeneration_callback=_regen_callback)
+            return {"response": safe_text}
             
         messages.append(message)
         

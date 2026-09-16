@@ -20,8 +20,10 @@ FORBIDDEN_TERMS = [
 ]
 
 @pytest.mark.skipif(
-    not os.environ.get("OPENAI_API_KEY") and not os.environ.get("GEMINI_API_KEY"),
-    reason="API Key required for LLM evaluation."
+    not os.environ.get("OPENAI_API_KEY")
+    and not os.environ.get("GEMINI_API_KEY")
+    and not os.environ.get("FIN_GUARD_LLM_API_KEY"),
+    reason="API Key required for LLM evaluation (set OPENAI_API_KEY, GEMINI_API_KEY, or FIN_GUARD_LLM_API_KEY)."
 )
 @pytest.mark.parametrize("question", EVALUATION_QUESTIONS)
 def test_evaluate_question(question):

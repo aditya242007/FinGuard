@@ -1,4 +1,5 @@
 import pytest
+import os
 from src.m9_agent.data_tools import (
     get_cluster, get_cluster_members, get_user, get_merchant, get_transaction,
     get_user_transactions, get_merchant_transactions, get_user_chargebacks,
@@ -117,3 +118,74 @@ def test_data_quality_context():
         if "error" not in ctx:
             assert ctx["entity_type"] == "transaction"
             assert "evidence" in ctx
+
+# ──────────────────────────────────────────────
+# M9.5 — Provider configuration unit tests
+# These tests exercise get_llm_client() without making any real network calls.
+# All assertions are on the (client, model) tuple returned by the function.
+# ──────────────────────────────────────────────
+
+from src.m9_agent.agent import get_llm_client
+
+def _clean_env(monkeypatch):
+    """Strip all provider-related env vars so each test starts clean."""
+    for var in (
+        "OPENAI_API_KEY", "GEMINI_API_KEY",
+        "FIN_GUARD_LLM_PROVIDER", "FIN_GUARD_LLM_MODEL",
+        "FIN_GUARD_LLM_BASE_URL", "FIN_GUARD_LLM_API_KEY",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
+def test_provider_gpt_oss_120b_with_base_url(monkeypatch):
+    """Generic provider path: FIN_GUARD_LLM_PROVIDER + BASE_URL + API_KEY."""
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("FIN_GUARD_LLM_PROVIDER", "gpt-oss-120b")
+    monkeypatch.setenv("FIN_GUARD_LLM_MODEL", "gpt-oss-120b")
+    monkeypatch.setenv("FIN_GUARD_LLM_BASE_URL", "https://example.openai-compat.com/v1")
+    monkeypatch.setenv("FIN_GUARD_LLM_API_KEY", "test-key-abc")
+    client, model = get_llm_client()
+    assert model == "gpt-oss-120b"
+    # base_url is stored on the underlying http client
+    assert "example.openai-compat.com" in str(client.base_url)
+
+
+def test_provider_generic_falls_back_to_openai_key(monkeypatch):
+    """Generic provider path: FIN_GUARD_LLM_API_KEY absent → fall back to OPENAI_API_KEY."""
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("FIN_GUARD_LLM_PROVIDER", "my-custom-model")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-fallback")
+    client, model = get_llm_client()
+    assert model == "my-custom-model"   # provider name used as model default
+
+
+def test_provider_generic_missing_key_raises(monkeypatch):
+    """Generic provider path with no API key must raise ValueError."""
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("FIN_GUARD_LLM_PROVIDER", "gpt-oss-120b")
+    with pytest.raises(ValueError, match="FIN_GUARD_LLM_PROVIDER"):
+        get_llm_client()
+
+
+def test_provider_gemini_legacy_path(monkeypatch):
+    """Legacy Gemini path is taken when only GEMINI_API_KEY is set."""
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-key-xyz")
+    client, model = get_llm_client()
+    assert model == "gemini-3.6-flash"
+    assert "generativelanguage.googleapis.com" in str(client.base_url)
+
+
+def test_provider_openai_default_path(monkeypatch):
+    """Legacy OpenAI default path is taken when only OPENAI_API_KEY is set."""
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-test")
+    client, model = get_llm_client()
+    assert model == "gpt-4o-mini"
+
+
+def test_provider_no_key_raises(monkeypatch):
+    """No keys at all must raise ValueError."""
+    _clean_env(monkeypatch)
+    with pytest.raises(ValueError, match="Missing API key"):
+        get_llm_client()
